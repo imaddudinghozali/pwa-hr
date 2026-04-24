@@ -15,7 +15,6 @@
 ### ⏱ Lembur
 - Pengajuan lembur oleh karyawan
 - Approval 2 level (HRD/Admin)
-- Perhitungan upah otomatis: Gaji ÷ 173 × 1.5 × Jam (UU Ketenagakerjaan)
 - Notifikasi real-time ke HRD
 
 ### 🏖 Pengajuan Cuti
