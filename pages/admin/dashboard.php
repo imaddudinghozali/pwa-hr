@@ -51,11 +51,41 @@ $cutList = db()->query("SELECT c.*,u.nama,jc.nama jenis_nama FROM pengajuan_cuti
     JOIN jenis_cuti jc ON c.jenis_cuti_id=jc.id
     WHERE c.status='pending' ORDER BY c.created_at DESC LIMIT 5");
 
+// Kontrak akan habis ≤ 30 hari
+$kontrakHabis = db()->query("SELECT u.nama, u.nip, u.jenis_karyawan,
+    u.tanggal_kontrak_selesai,
+    DATEDIFF(u.tanggal_kontrak_selesai, CURDATE()) sisa_hari
+    FROM users u WHERE u.jenis_karyawan IN ('kontrak','magang')
+    AND u.tanggal_kontrak_selesai BETWEEN CURDATE() AND DATE_ADD(CURDATE(),INTERVAL 30 DAY)
+    AND u.status='aktif' ORDER BY u.tanggal_kontrak_selesai ASC LIMIT 10");
+
+// Reimburse pending
+$reimbPend = (int)db()->query("SELECT COUNT(*) c FROM reimburse WHERE status='pending'")->fetch_assoc()['c'];
+
 $pageTitle  = 'Dashboard';
 $pageSub    = 'PT Pesta Hijau Abadi — '.date('d F Y');
 $activePage = 'dashboard';
 include __DIR__.'/../../includes/header.php';
 ?>
+
+<?php if ($kontrakHabis && $kontrakHabis->num_rows > 0): ?>
+<div class="alert alert-amber" style="display:flex;align-items:flex-start;gap:12px;margin-bottom:1rem">
+    <span style="font-size:22px;flex-shrink:0">⚠</span>
+    <div style="flex:1">
+        <div style="font-weight:700;margin-bottom:6px">Kontrak / Magang Akan Berakhir dalam 30 Hari</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <?php while ($k = $kontrakHabis->fetch_assoc()): ?>
+        <span style="background:rgba(245,158,11,.2);padding:3px 10px;border-radius:100px;font-size:12px">
+            <strong><?= htmlspecialchars($k['nama']) ?></strong>
+            (<?= ucfirst($k['jenis_karyawan']) ?>) — <?= (int)$k['sisa_hari'] ?> hari lagi
+            <span class="text-muted"><?= formatTgl($k['tanggal_kontrak_selesai']) ?></span>
+        </span>
+        <?php endwhile; ?>
+        </div>
+    </div>
+    <a href="<?= BASE_URL ?>/pages/admin/karyawan.php?jenis=kontrak" class="btn btn-sm btn-amber" style="flex-shrink:0">Kelola</a>
+</div>
+<?php endif; ?>
 
 <div class="stat-grid">
     <div class="stat-card green">
@@ -73,8 +103,8 @@ include __DIR__.'/../../includes/header.php';
     <div class="stat-card amber">
         <div class="stat-icon">⏳</div>
         <div class="stat-label">Pending Approval</div>
-        <div class="stat-value"><?= $lemPend + $cutPend ?></div>
-        <div class="stat-sub"><?= $lemPend ?> lembur · <?= $cutPend ?> cuti</div>
+        <div class="stat-value"><?= $lemPend + $cutPend + $reimbPend ?></div>
+        <div class="stat-sub"><?= $lemPend ?> lembur · <?= $cutPend ?> cuti · <?= $reimbPend ?> reimburse</div>
     </div>
     <div class="stat-card green">
         <div class="stat-icon">💰</div>
