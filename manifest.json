@@ -1,0 +1,29 @@
+{
+  "name": "SIMK PT Pesta Hijau Abadi",
+  "short_name": "SIMK PHA",
+  "description": "Sistem Informasi Manajemen Karyawan PT Pesta Hijau Abadi",
+  "start_url": "/pwa-hr/",
+  "display": "standalone",
+  "background_color": "#0f1a0f",
+  "theme_color": "#16a34a",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/pwa-hr/assets/icons/icon-72.png", "sizes": "72x72", "type": "image/png" },
+    { "src": "/pwa-hr/assets/icons/icon-96.png", "sizes": "96x96", "type": "image/png" },
+    { "src": "/pwa-hr/assets/icons/icon-128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "/pwa-hr/assets/icons/icon-144.png", "sizes": "144x144", "type": "image/png" },
+    { "src": "/pwa-hr/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/pwa-hr/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Absen Masuk",
+      "short_name": "Absen",
+      "description": "Catat kehadiran hari ini",
+      "url": "/pwa-hr/pages/karyawan/absensi.php",
+      "icons": [{ "src": "/pwa-hr/assets/icons/icon-96.png", "sizes": "96x96" }]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#16a34a">
+<title>Offline — SIMK PHA</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#0a1a0a;color:#f0fdf4;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.card{background:#0f2210;border:1px solid rgba(34,197,94,0.2);border-radius:20px;padding:2.5rem;text-align:center;max-width:360px;width:100%}
+.icon{font-size:64px;margin-bottom:1rem}
+h1{font-size:22px;font-weight:700;margin-bottom:8px;color:#4ade80}
+p{font-size:14px;color:#86efac;margin-bottom:1.5rem;line-height:1.6}
+button{padding:10px 24px;background:#15803d;border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+button:hover{background:#16a34a}
+.cached{margin-top:1.5rem;font-size:12px;color:#4ade80;opacity:0.7}
+</style>
+</head>
+<body>
+<div class="card">
+    <div class="icon">📡</div>
+    <h1>Tidak Ada Koneksi</h1>
+    <p>Anda sedang offline. Beberapa fitur tidak tersedia tanpa koneksi internet.<br><br>Halaman yang pernah dikunjungi mungkin masih dapat diakses.</p>
+    <button onclick="window.location.reload()">🔄 Coba Lagi</button>
+    <div class="cached">SIMK PT Pesta Hijau Abadi</div>
+</div>
+</body>
+</html>
