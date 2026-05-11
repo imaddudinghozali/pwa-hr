@@ -7,27 +7,48 @@ $hari  = date('Y-m-d');
 $bulan = (int)date('m');
 $tahun = (int)date('Y');
 
+function dashQuery(string $sql): mysqli_result|false {
+    return db()->query($sql);
+}
+
+function dashRow(string $sql, array $fallback = []): array {
+    $res = dashQuery($sql);
+    if (!$res) return $fallback;
+    $row = $res->fetch_assoc();
+    return $row ?: $fallback;
+}
+
+function dashInt(string $sql, string $key = 'c'): int {
+    $row = dashRow($sql, [$key => 0]);
+    return (int)($row[$key] ?? 0);
+}
+
+function dashFloat(string $sql, string $key = 't'): float {
+    $row = dashRow($sql, [$key => 0]);
+    return (float)($row[$key] ?? 0);
+}
+
 // Stats karyawan
-$sKar = db()->query("SELECT
+$sKar = dashRow("SELECT
     COUNT(*) total,
     SUM(status='aktif') aktif,
     SUM(status='cuti') cuti
-    FROM users WHERE role='karyawan'")->fetch_assoc();
+    FROM users WHERE role='karyawan'", ['total' => 0, 'aktif' => 0, 'cuti' => 0]);
 
 // Hadir hari ini
-$hadir = (int)db()->query("SELECT COUNT(DISTINCT user_id) c FROM absensi
-    WHERE tanggal='$hari' AND status_kehadiran='hadir'")->fetch_assoc()['c'];
+$hadir = dashInt("SELECT COUNT(DISTINCT user_id) c FROM absensi
+    WHERE tanggal='$hari' AND status_kehadiran='hadir'");
 
 // Pending
-$lemPend = (int)db()->query("SELECT COUNT(*) c FROM lembur WHERE status='pending'")->fetch_assoc()['c'];
-$cutPend = (int)db()->query("SELECT COUNT(*) c FROM pengajuan_cuti WHERE status='pending'")->fetch_assoc()['c'];
+$lemPend = dashInt("SELECT COUNT(*) c FROM lembur WHERE status='pending'");
+$cutPend = dashInt("SELECT COUNT(*) c FROM pengajuan_cuti WHERE status='pending'");
 
 // Total gaji bulan ini
-$totGaji = (float)db()->query("SELECT COALESCE(SUM(gaji_bersih),0) t FROM slip_gaji
-    WHERE bulan=$bulan AND tahun=$tahun")->fetch_assoc()['t'];
+$totGaji = dashFloat("SELECT COALESCE(SUM(gaji_bersih),0) t FROM slip_gaji
+    WHERE bulan=$bulan AND tahun=$tahun");
 
 // Absensi hari ini
-$absenHari = db()->query("SELECT a.*,u.nama,u.nip,d.nama dept_nama
+$absenHari = dashQuery("SELECT a.*,u.nama,u.nip,d.nama dept_nama
     FROM absensi a
     JOIN users u ON a.user_id=u.id
     LEFT JOIN departemen d ON u.departemen_id=d.id
@@ -35,24 +56,24 @@ $absenHari = db()->query("SELECT a.*,u.nama,u.nip,d.nama dept_nama
     ORDER BY a.jam_masuk DESC LIMIT 10");
 
 // Distribusi departemen
-$deptDist = db()->query("SELECT d.nama,COUNT(u.id) jml
+$deptDist = dashQuery("SELECT d.nama,COUNT(u.id) jml
     FROM departemen d
     LEFT JOIN users u ON u.departemen_id=d.id AND u.role='karyawan' AND u.status='aktif'
     GROUP BY d.id,d.nama ORDER BY jml DESC");
 
 // Pending lembur (5)
-$lemList = db()->query("SELECT l.*,u.nama,u.nip FROM lembur l
+$lemList = dashQuery("SELECT l.*,u.nama,u.nip FROM lembur l
     JOIN users u ON l.user_id=u.id WHERE l.status='pending'
     ORDER BY l.created_at DESC LIMIT 5");
 
 // Pending cuti (5)
-$cutList = db()->query("SELECT c.*,u.nama,jc.nama jenis_nama FROM pengajuan_cuti c
+$cutList = dashQuery("SELECT c.*,u.nama,jc.nama jenis_nama FROM pengajuan_cuti c
     JOIN users u ON c.user_id=u.id
     JOIN jenis_cuti jc ON c.jenis_cuti_id=jc.id
     WHERE c.status='pending' ORDER BY c.created_at DESC LIMIT 5");
 
 // Kontrak akan habis dalam 30 hari
-$kontrakHabis = db()->query("SELECT u.nama, u.nip, u.jenis_karyawan,
+$kontrakHabis = dashQuery("SELECT u.nama, u.nip, u.jenis_karyawan,
     u.tanggal_kontrak_selesai,
     DATEDIFF(u.tanggal_kontrak_selesai, CURDATE()) sisa_hari
     FROM users u WHERE u.jenis_karyawan IN ('kontrak','magang')
@@ -60,7 +81,7 @@ $kontrakHabis = db()->query("SELECT u.nama, u.nip, u.jenis_karyawan,
     AND u.status='aktif' ORDER BY u.tanggal_kontrak_selesai ASC LIMIT 10");
 
 // Reimburse pending
-$reimbPend = (int)db()->query("SELECT COUNT(*) c FROM reimburse WHERE status='pending'")->fetch_assoc()['c'];
+$reimbPend = dashInt("SELECT COUNT(*) c FROM reimburse WHERE status='pending'");
 
 $pageTitle  = 'Dashboard';
 $pageSub    = 'PT Pesta Hijau Abadi - '.date('d F Y');
@@ -171,7 +192,9 @@ include __DIR__.'/../../includes/header.php';
     <div class="card">
         <div class="card-header"><span class="card-title">Distribusi Karyawan</span></div>
         <div class="card-body">
-        <?php $totalAktif = max(1,(int)$sKar['aktif']); while ($d = $deptDist->fetch_assoc()):
+        <?php if (!$deptDist || $deptDist->num_rows === 0): ?>
+            <div class="empty-state">Belum ada data departemen</div>
+        <?php else: $totalAktif = max(1,(int)$sKar['aktif']); while ($d = $deptDist->fetch_assoc()):
             $pct = round($d['jml'] / $totalAktif * 100); ?>
             <div style="margin-bottom:12px">
                 <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
@@ -182,7 +205,7 @@ include __DIR__.'/../../includes/header.php';
                     <div style="background:var(--green-600);height:100%;width:<?= $pct ?>%"></div>
                 </div>
             </div>
-        <?php endwhile; ?>
+        <?php endwhile; endif; ?>
         </div>
     </div>
 </div>
@@ -199,7 +222,9 @@ include __DIR__.'/../../includes/header.php';
             <table>
                 <thead><tr><th>Karyawan</th><th>Tanggal</th><th>Durasi</th></tr></thead>
                 <tbody>
-                <?php while ($l = $lemList->fetch_assoc()): ?>
+                <?php if (!$lemList || $lemList->num_rows === 0): ?>
+                <tr><td colspan="3" style="text-align:center;padding:1.5rem;color:var(--text-m)">Tidak ada lembur pending</td></tr>
+                <?php else: while ($l = $lemList->fetch_assoc()): ?>
                 <tr>
                     <td><div class="name-cell">
                         <div class="avatar av-sm" style="background:<?= avatarBg((int)$l['user_id']) ?>"><?= initials($l['nama']) ?></div>
@@ -208,7 +233,7 @@ include __DIR__.'/../../includes/header.php';
                     <td class="text-sm"><?= formatTgl($l['tanggal']) ?></td>
                     <td><span class="badge badge-amber"><?= round(($l['durasi_menit'] ?? 0)/60, 1) ?> jam</span></td>
                 </tr>
-                <?php endwhile; ?>
+                <?php endwhile; endif; ?>
                 </tbody>
             </table>
         </div>
@@ -224,7 +249,9 @@ include __DIR__.'/../../includes/header.php';
             <table>
                 <thead><tr><th>Karyawan</th><th>Jenis</th><th>Lama</th></tr></thead>
                 <tbody>
-                <?php while ($c = $cutList->fetch_assoc()): ?>
+                <?php if (!$cutList || $cutList->num_rows === 0): ?>
+                <tr><td colspan="3" style="text-align:center;padding:1.5rem;color:var(--text-m)">Tidak ada cuti pending</td></tr>
+                <?php else: while ($c = $cutList->fetch_assoc()): ?>
                 <tr>
                     <td><div class="name-cell">
                         <div class="avatar av-sm" style="background:<?= avatarBg((int)$c['user_id']) ?>"><?= initials($c['nama']) ?></div>
@@ -233,7 +260,7 @@ include __DIR__.'/../../includes/header.php';
                     <td class="text-sm"><?= htmlspecialchars($c['jenis_nama']) ?></td>
                     <td><span class="badge badge-blue"><?= (int)$c['jumlah_hari'] ?> hari</span></td>
                 </tr>
-                <?php endwhile; ?>
+                <?php endwhile; endif; ?>
                 </tbody>
             </table>
         </div>
