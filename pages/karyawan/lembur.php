@@ -51,15 +51,15 @@ $rows  = db()->query("SELECT * FROM lembur WHERE user_id=$uid ORDER BY created_a
 $rekap = db()->query("SELECT SUM(status='pending') pend,SUM(status='disetujui') dis,COALESCE(SUM(CASE WHEN status='disetujui' THEN durasi_menit ELSE 0 END),0) dm,COALESCE(SUM(CASE WHEN status='disetujui' THEN upah_lembur ELSE 0 END),0) upah FROM lembur WHERE user_id=$uid AND MONTH(tanggal)=MONTH(CURDATE()) AND YEAR(tanggal)=YEAR(CURDATE())")->fetch_assoc();
 
 $pageTitle='Lembur Saya'; $activePage='lembur';
-$topbarActions='<button class="btn btn-primary" onclick="openModal(\'mLembur\')">+ Ajukan Lembur</button>';
+$topbarActions='<button class="btn btn-primary icon-label" onclick="openModal(\'mLembur\')"><span class="ui-icon i-clock"></span> Ajukan Lembur</button>';
 include __DIR__.'/../../includes/header.php';
 ?>
 
 <div class="stat-grid mb-2" style="grid-template-columns:repeat(4,1fr)">
-    <div class="stat-card amber"><div class="stat-icon">⏳</div><div class="stat-label">Pending</div><div class="stat-value"><?=(int)$rekap['pend']?></div></div>
-    <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-label">Disetujui</div><div class="stat-value"><?=(int)$rekap['dis']?></div></div>
-    <div class="stat-card blue"><div class="stat-icon">⏱</div><div class="stat-label">Total Jam</div><div class="stat-value"><?=round($rekap['dm']/60,1)?></div><div class="stat-sub">bulan ini</div></div>
-    <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-label">Upah Lembur</div><div class="stat-value" style="font-size:14px"><?=formatRp($rekap['upah'])?></div></div>
+    <div class="stat-card amber"><div class="stat-icon"><span class="ui-icon i-clock"></span></div><div class="stat-label">Pending</div><div class="stat-value"><?=(int)$rekap['pend']?></div></div>
+    <div class="stat-card green"><div class="stat-icon"><span class="ui-icon i-check"></span></div><div class="stat-label">Disetujui</div><div class="stat-value"><?=(int)$rekap['dis']?></div></div>
+    <div class="stat-card blue"><div class="stat-icon"><span class="ui-icon i-clock"></span></div><div class="stat-label">Total Jam</div><div class="stat-value"><?=round($rekap['dm']/60,1)?></div><div class="stat-sub">bulan ini</div></div>
+    <div class="stat-card green"><div class="stat-icon"><span class="ui-icon i-wallet"></span></div><div class="stat-label">Upah Lembur</div><div class="stat-value" style="font-size:14px"><?=formatRp($rekap['upah'])?></div></div>
 </div>
 
 <div class="card">
@@ -77,9 +77,9 @@ include __DIR__.'/../../includes/header.php';
             <td class="mono text-sm"><?=substr($r['jam_selesai'],0,5)?></td>
             <td><span class="badge badge-blue"><?=round($r['durasi_menit']/60,1)?> jam</span></td>
             <td class="text-sm text-muted" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><?=htmlspecialchars($r['alasan']??'')?></td>
-            <td class="text-sm"><?=$r['upah_lembur']>0?formatRp($r['upah_lembur']):'—'?></td>
+            <td class="text-sm"><?=$r['upah_lembur']>0?formatRp($r['upah_lembur']):'&mdash;'?></td>
             <td><span class="badge <?=$bs[$r['status']]??'badge-gray'?>"><?=ucfirst($r['status'])?></span></td>
-            <td class="text-sm text-muted"><?=htmlspecialchars(substr($r['catatan_approver']??'—',0,30))?></td>
+            <td class="text-sm text-muted"><?=htmlspecialchars(substr($r['catatan_approver']??'&mdash;',0,30))?></td>
         </tr>
         <?php endwhile; endif;?>
         </tbody>
@@ -87,16 +87,16 @@ include __DIR__.'/../../includes/header.php';
     <div class="pagination">
         <span><?=$total?> pengajuan</span>
         <div class="page-btns">
-            <?php if($page>1):?><a href="?page=<?=$page-1?>" class="page-btn">‹</a><?php endif;?>
+            <?php if($page>1):?><a href="?page=<?=$page-1?>" class="page-btn">&lsaquo;</a><?php endif;?>
             <?php for($i=max(1,$page-2);$i<=min($pages,$page+2);$i++):?><a href="?page=<?=$i?>" class="page-btn <?=$i==$page?'active':''?>"><?=$i?></a><?php endfor;?>
-            <?php if($page<$pages):?><a href="?page=<?=$page+1?>" class="page-btn">›</a><?php endif;?>
+            <?php if($page<$pages):?><a href="?page=<?=$page+1?>" class="page-btn">&rsaquo;</a><?php endif;?>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay" id="mLembur">
 <div class="modal">
-    <div class="modal-header"><span class="modal-title">Ajukan Lembur</span><button class="modal-close" onclick="closeModal('mLembur')">✕</button></div>
+    <div class="modal-header"><span class="modal-title">Ajukan Lembur</span><button class="modal-close" onclick="closeModal('mLembur')" aria-label="Tutup"><span class="ui-icon i-x"></span></button></div>
     <form method="POST">
     <div class="modal-body">
         <div class="form-grid">
@@ -108,7 +108,7 @@ include __DIR__.'/../../includes/header.php';
             <div class="form-group form-full"><label class="form-label">Alasan *</label>
                 <textarea name="alasan" class="form-control" rows="3" required placeholder="Jelaskan pekerjaan saat lembur..."></textarea></div>
         </div>
-        <div class="alert alert-info mt-1" style="font-size:12px">Upah: Gaji ÷ 173 × 1.5 × Jam (UU Ketenagakerjaan)</div>
+        <div class="alert alert-info mt-1" style="font-size:12px">Upah: Gaji / 173 x 1.5 x Jam (UU Ketenagakerjaan)</div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn" onclick="closeModal('mLembur')">Batal</button>

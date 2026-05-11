@@ -34,7 +34,14 @@ include __DIR__.'/../../includes/header.php';
 .bubble-meta { font-size:10px; color:var(--text-m); margin-top:3px; }
 .bubble.mine .bubble-meta { text-align:right; }
 .no-room { display:flex; align-items:center; justify-content:center; flex:1; color:var(--text-m); font-size:14px; text-align:center; padding:2rem; }
-@media (max-width:600px) { .chat-layout { grid-template-columns:1fr; height:auto; } .chat-sidebar { border-radius:var(--rl) var(--rl) 0 0; max-height:220px; } .chat-main { border-left:1px solid var(--border); border-radius:0 0 var(--rl) var(--rl); min-height:400px; } }
+@media (max-width:768px) {
+    .chat-layout { grid-template-columns:1fr; height:auto; min-height:auto; }
+    .chat-sidebar { border-radius:var(--rl) var(--rl) 0 0; max-height:240px; }
+    .chat-main { border-left:1px solid var(--border); border-top:none; border-radius:0 0 var(--rl) var(--rl); min-height:65vh; }
+    .bubble { max-width:85%; }
+    .chat-input-wrap { padding:.5rem .75rem; }
+    .chat-input { font-size:14px; }
+}
 </style>
 
 <div class="chat-layout">
@@ -53,7 +60,7 @@ include __DIR__.'/../../includes/header.php';
             Pilih percakapan di kiri, atau mulai chat baru dengan HR
         </div>
         <div id="chat-area" style="display:none;flex-direction:column;flex:1;overflow:hidden">
-            <div class="chat-header" id="chat-header-name">—</div>
+            <div class="chat-header" id="chat-header-name">&mdash;</div>
             <div class="chat-messages" id="chat-messages"></div>
             <div class="chat-input-wrap">
                 <textarea id="chat-input" class="chat-input" placeholder="Ketik pesan..." rows="1"
@@ -67,7 +74,7 @@ include __DIR__.'/../../includes/header.php';
 <!-- Modal new chat -->
 <div class="modal-overlay" id="mNewChat">
 <div class="modal">
-    <div class="modal-header"><span class="modal-title">Mulai Chat Baru</span><button class="modal-close" onclick="closeModal('mNewChat')">✕</button></div>
+    <div class="modal-header"><span class="modal-title">Mulai Chat Baru</span><button class="modal-close" onclick="closeModal('mNewChat')" aria-label="Tutup"><span class="ui-icon i-x"></span></button></div>
     <div class="modal-body">
         <div class="form-group mb-2">
             <input type="text" id="search-user" class="form-control" placeholder="Cari nama / jabatan..." oninput="filterUsers()">
@@ -78,16 +85,27 @@ include __DIR__.'/../../includes/header.php';
 </div>
 
 <script>
-var BASE = '<?= BASE_URL ?>';
+var BASE = window.BASE_URL || '<?= BASE_URL ?>';
 var activeRoomId = 0;
 var lastMsgId    = 0;
 var pollTimer    = null;
 
-// ── Load rooms ───────────────────────────────────────────────
+// Wrapper fetch yang aman: cek HTTP status & JSON valid
+function chatFetch(url, opts) {
+    return fetch(url, opts).then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text().then(function(t) {
+            try { return JSON.parse(t); }
+            catch (e) { console.error('Bad JSON dari', url, ':', t.substring(0,200)); throw new Error('Response bukan JSON'); }
+        });
+    });
+}
+
+// ---
 function loadRooms() {
-    fetch(BASE + '/api/chat.php?action=get_rooms')
-    .then(r=>r.json()).then(d=>{
-        if (!d.ok) return;
+    chatFetch(BASE + '/api/chat.php?action=get_rooms')
+    .then(d=>{
+        if (!d.ok) { console.warn('loadRooms:', d.msg); return; }
         var html = '';
         d.rooms.forEach(function(rm) {
             var unread = parseInt(rm.unread)||0;
@@ -95,7 +113,7 @@ function loadRooms() {
             var preview = rm.last_msg ? (rm.last_sender ? rm.last_sender+': ' : '') + rm.last_msg.substring(0,50) : 'Belum ada pesan';
             html += '<div class="'+cls+'" data-id="'+rm.id+'" onclick="bukaRoom('+rm.id+',\''+escHtml(rm.nama)+'\')">' +
                 '<div style="display:flex;justify-content:space-between;align-items:center">' +
-                '<div class="room-name">'+(rm.tipe==='group'?'👥 ':'')+escHtml(rm.nama)+'</div>' +
+                '<div class="room-name">'+(rm.tipe==='group' ? '<span class="ui-icon i-users ui-icon-sm"></span> ' : '')+escHtml(rm.nama)+'</div>' +
                 (unread>0 ? '<span class="room-badge">'+unread+'</span>' : '') +
                 '</div>' +
                 '<div class="room-preview">'+escHtml(preview)+'</div>' +
@@ -103,10 +121,11 @@ function loadRooms() {
         });
         if (!html) html = '<div style="text-align:center;padding:2rem;color:var(--text-m);font-size:13px">Belum ada percakapan</div>';
         document.getElementById('room-list').innerHTML = html;
-    });
+    })
+    .catch(err => { console.error('loadRooms error:', err); });
 }
 
-// ── Buka room ────────────────────────────────────────────────
+// ---
 function bukaRoom(rid, rname) {
     activeRoomId = rid;
     lastMsgId    = 0;
@@ -121,12 +140,12 @@ function bukaRoom(rid, rname) {
     loadRooms();
 }
 
-// ── Poll messages ─────────────────────────────────────────────
+// ---
 function pollMessages() {
     if (!activeRoomId) return;
-    fetch(BASE+'/api/chat.php?action=get_messages&room_id='+activeRoomId+'&last_id='+lastMsgId)
-    .then(r=>r.json()).then(d=>{
-        if (!d.ok) return;
+    chatFetch(BASE+'/api/chat.php?action=get_messages&room_id='+activeRoomId+'&last_id='+lastMsgId)
+    .then(d=>{
+        if (!d.ok) { console.warn('pollMessages:', d.msg); return; }
         var box = document.getElementById('chat-messages');
         var atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
         d.messages.forEach(function(m) {
@@ -140,10 +159,11 @@ function pollMessages() {
             lastMsgId = Math.max(lastMsgId, parseInt(m.id));
         });
         if (atBottom) box.scrollTop = box.scrollHeight;
-    });
+    })
+    .catch(err => { console.error('pollMessages error:', err); });
 }
 
-// ── Kirim pesan ───────────────────────────────────────────────
+// ---
 function kirimPesan() {
     var inp   = document.getElementById('chat-input');
     var pesan = inp.value.trim();
@@ -153,19 +173,22 @@ function kirimPesan() {
     fd.append('action', 'send_message');
     fd.append('room_id', activeRoomId);
     fd.append('pesan', pesan);
-    fetch(BASE+'/api/chat.php', {method:'POST', body:fd})
-    .then(r=>r.json()).then(d=>{ if(d.ok) pollMessages(); });
+    chatFetch(BASE+'/api/chat.php', {method:'POST', body:fd})
+    .then(d=>{ if(d.ok) pollMessages(); else alert('Gagal kirim: '+(d.msg||'')); })
+    .catch(err => alert('Gagal kirim pesan: '+err.message));
 }
 
-// ── New chat ──────────────────────────────────────────────────
+// ---
 var allUsers = [];
 function openNewChat() {
-    fetch(BASE+'/api/chat.php?action=get_users')
-    .then(r=>r.json()).then(d=>{
+    chatFetch(BASE+'/api/chat.php?action=get_users')
+    .then(d=>{
+        if (!d.ok) { alert(d.msg||'Gagal load user'); return; }
         allUsers = d.users || [];
         renderUserList(allUsers);
         openModal('mNewChat');
-    });
+    })
+    .catch(err => alert('Gagal load user: '+err.message));
 }
 function filterUsers() {
     var q = document.getElementById('search-user').value.toLowerCase();
@@ -179,7 +202,7 @@ function renderUserList(users) {
             'onclick="startPrivateChat('+u.id+',\''+escHtml(u.nama)+'\')">' +
             '<div class="avatar av-sm" style="background:#16a34a;flex-shrink:0">'+initials(u.nama)+'</div>' +
             '<div><div style="font-size:13px;font-weight:600">'+escHtml(u.nama)+'</div>' +
-            '<div style="font-size:11px;color:var(--text-m)">'+escHtml(u.role)+' · '+(escHtml(u.jabatan_nama)||'—')+'</div></div></div>';
+            '<div style="font-size:11px;color:var(--text-m)">'+escHtml(u.role)+' &middot; '+(escHtml(u.jabatan_nama)||'&mdash;')+'</div></div></div>';
     });
     if (!html) html = '<div style="text-align:center;padding:1rem;color:var(--text-m)">Tidak ada user</div>';
     document.getElementById('user-list').innerHTML = html;
@@ -189,10 +212,12 @@ function startPrivateChat(targetId, targetNama) {
     var fd = new FormData();
     fd.append('action', 'get_or_create_room');
     fd.append('target_id', targetId);
-    fetch(BASE+'/api/chat.php', {method:'POST', body:fd})
-    .then(r=>r.json()).then(d=>{
+    chatFetch(BASE+'/api/chat.php', {method:'POST', body:fd})
+    .then(d=>{
         if (d.ok) { loadRooms(); bukaRoom(d.room_id, targetNama); }
-    });
+        else alert(d.msg||'Gagal mulai chat');
+    })
+    .catch(err => alert('Gagal mulai chat: '+err.message));
 }
 function initials(n) {
     var p = n.trim().split(' ').filter(Boolean);

@@ -1,17 +1,19 @@
 // ============================================================
-// Service Worker — SIMK PT Pesta Hijau Abadi
+// Service Worker &mdash; SIMK PT Pesta Hijau Abadi
 // ============================================================
 
-const CACHE_NAME = 'simk-pha-v1';
-const OFFLINE_URL = '/pwa-hr/offline.html';
+const CACHE_NAME = 'simk-pha-v7';
+// Base path otomatis dari lokasi sw.js (jalan di subfolder maupun root domain)
+const BASE = self.registration.scope.replace(/\/$/, '');
+const OFFLINE_URL = BASE + '/offline.html';
 
 const PRECACHE = [
-    '/pwa-hr/',
-    '/pwa-hr/login.php',
-    '/pwa-hr/offline.html',
-    '/pwa-hr/assets/css/app.css',
-    '/pwa-hr/assets/js/app.js',
-    '/pwa-hr/manifest.json',
+    BASE + '/',
+    BASE + '/login.php',
+    BASE + '/offline.html',
+    BASE + '/assets/css/app.css',
+    BASE + '/assets/js/app.js',
+    BASE + '/manifest.json',
 ];
 
 // Install
@@ -30,7 +32,7 @@ self.addEventListener('activate', e => {
     );
 });
 
-// Fetch — Network first, cache fallback
+// Fetch &mdash; Network first, cache fallback
 self.addEventListener('fetch', e => {
     if (e.request.method !== 'GET') return;
     if (e.request.url.includes('/api/')) return; // API tidak dicache
@@ -52,9 +54,9 @@ self.addEventListener('push', e => {
     e.waitUntil(
         self.registration.showNotification(data.title, {
             body: data.body,
-            icon: '/pwa-hr/assets/icons/icon-192.png',
-            badge: '/pwa-hr/assets/icons/icon-72.png',
-            data: { url: data.url || '/pwa-hr/' },
+            icon: BASE + '/assets/icons/icon-192.png',
+            badge: BASE + '/assets/icons/icon-72.png',
+            data: { url: data.url || BASE + '/' },
             vibrate: [200, 100, 200],
             tag: 'simk-notif'
         })

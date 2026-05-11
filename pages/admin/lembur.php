@@ -82,22 +82,22 @@ include __DIR__.'/../../includes/header.php';
         <td><div class="name-cell">
             <div class="avatar av-sm" style="background:<?= avatarBg((int)$r['user_id']) ?>"><?= initials($r['nama']) ?></div>
             <div><div class="nc-name"><?= htmlspecialchars($r['nama']) ?></div>
-            <div class="nc-sub"><?= htmlspecialchars($r['dept_nama'] ?? '—') ?></div></div>
+            <div class="nc-sub"><?= htmlspecialchars($r['dept_nama'] ?? '&mdash;') ?></div></div>
         </div></td>
         <td class="text-sm"><?= formatTgl($r['tanggal']) ?></td>
         <td class="mono text-sm"><?= substr($r['jam_mulai'],0,5) ?></td>
         <td class="mono text-sm"><?= substr($r['jam_selesai'],0,5) ?></td>
         <td><span class="badge badge-blue"><?= round(($r['durasi_menit']??0)/60,1) ?> jam</span></td>
         <td class="text-sm text-muted" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><?= htmlspecialchars($r['alasan'] ?? '') ?></td>
-        <td class="text-sm"><?= $r['upah_lembur'] > 0 ? formatRp($r['upah_lembur']) : '—' ?></td>
+        <td class="text-sm"><?= $r['upah_lembur'] > 0 ? formatRp($r['upah_lembur']) : '&mdash;' ?></td>
         <td><span class="badge <?= $bs[$r['status']] ?? 'badge-gray' ?>"><?= ucfirst($r['status']) ?></span></td>
         <td>
             <?php if ($r['status'] === 'pending'): ?>
             <div class="flex gap-2">
-                <button class="btn btn-sm btn-primary" onclick="bukaApproval(<?= $r['id'] ?>,'disetujui')">✓</button>
-                <button class="btn btn-sm btn-danger"  onclick="bukaApproval(<?= $r['id'] ?>,'ditolak')">✗</button>
+                <button class="btn btn-sm btn-primary" onclick="bukaApproval(<?= $r['id'] ?>,'disetujui')"><span class="ui-icon i-check"></span> Setujui</button>
+                <button class="btn btn-sm btn-danger"  onclick="bukaApproval(<?= $r['id'] ?>,'ditolak')" aria-label="Tolak"><span class="ui-icon i-x"></span></button>
             </div>
-            <?php else: echo '—'; endif; ?>
+            <?php else: echo '&mdash;'; endif; ?>
         </td>
     </tr>
     <?php endwhile; endif; ?>
@@ -107,9 +107,9 @@ include __DIR__.'/../../includes/header.php';
 <div class="pagination">
     <span><?= $total ?> total</span>
     <div class="page-btns">
-        <?php if($page>1):?><a href="?status=<?=$stF?>&page=<?=$page-1?>" class="page-btn">‹</a><?php endif;?>
+        <?php if($page>1):?><a href="?status=<?=$stF?>&page=<?=$page-1?>" class="page-btn">&lsaquo;</a><?php endif;?>
         <?php for($i=max(1,$page-2);$i<=min($pages,$page+2);$i++):?><a href="?status=<?=$stF?>&page=<?=$i?>" class="page-btn <?=$i==$page?'active':''?>"><?=$i?></a><?php endfor;?>
-        <?php if($page<$pages):?><a href="?status=<?=$stF?>&page=<?=$page+1?>" class="page-btn">›</a><?php endif;?>
+        <?php if($page<$pages):?><a href="?status=<?=$stF?>&page=<?=$page+1?>" class="page-btn">&rsaquo;</a><?php endif;?>
     </div>
 </div>
 </div>
@@ -119,7 +119,7 @@ include __DIR__.'/../../includes/header.php';
 <div class="modal">
     <div class="modal-header">
         <span class="modal-title" id="mApprovalTitle">Konfirmasi</span>
-        <button class="modal-close" onclick="closeModal('mApproval')">✕</button>
+        <button class="modal-close" onclick="closeModal('mApproval')" aria-label="Tutup"><span class="ui-icon i-x"></span></button>
     </div>
     <form method="POST">
     <input type="hidden" name="id"     id="aId">
@@ -142,7 +142,7 @@ include __DIR__.'/../../includes/header.php';
 function bukaApproval(id, action) {
     document.getElementById('aId').value = id;
     document.getElementById('aAction').value = action;
-    document.getElementById('mApprovalTitle').textContent = action === 'disetujui' ? '✓ Setujui Lembur' : '✗ Tolak Lembur';
+    document.getElementById('mApprovalTitle').textContent = action === 'disetujui' ? 'Setujui Lembur' : 'Tolak Lembur';
     document.getElementById('aBtnSubmit').className = 'btn ' + (action === 'disetujui' ? 'btn-primary' : 'btn-danger');
     openModal('mApproval');
 }

@@ -30,17 +30,17 @@ include __DIR__.'/../../includes/header.php';
 <div class="card">
 <?php if (!$rows || $rows->num_rows===0): ?>
 <div style="text-align:center;padding:3rem;color:var(--text-m)">
-    <div style="font-size:48px;margin-bottom:12px">🔔</div>
+    <div style="font-size:48px;margin-bottom:12px"><span class="ui-icon i-bell"></span></div>
     <div>Tidak ada notifikasi</div>
 </div>
 <?php else: while ($r = $rows->fetch_assoc()):
-    $icons = ['info'=>'ℹ️','sukses'=>'✅','peringatan'=>'⚠️','bahaya'=>'🚨'];
-    $icon  = $icons[$r['tipe']] ?? 'ℹ️';
+    $icons = ['info'=>'i-info','sukses'=>'i-check','peringatan'=>'i-alert','bahaya'=>'i-alert'];
+    $icon  = $icons[$r['tipe']] ?? 'i-info';
     $bg    = !$r['sudah_dibaca'] ? 'rgba(34,197,94,.05)' : 'transparent';
 ?>
 <div style="display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);background:<?=$bg?>;cursor:pointer"
     onclick="location.href='?baca=<?=$r['id']?>'">
-    <div style="font-size:20px;flex-shrink:0;margin-top:2px"><?=$icon?></div>
+    <div style="font-size:20px;flex-shrink:0;margin-top:2px"><span class="ui-icon <?=$icon?>"></span></div>
     <div style="flex:1">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
             <strong style="font-size:13.5px"><?=htmlspecialchars($r['judul'])?></strong>

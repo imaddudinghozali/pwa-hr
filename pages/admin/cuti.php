@@ -73,7 +73,7 @@ include __DIR__.'/../../includes/header.php';
         <td><div class="name-cell">
             <div class="avatar av-sm" style="background:<?= avatarBg((int)$r['user_id']) ?>"><?= initials($r['nama']) ?></div>
             <div><div class="nc-name"><?= htmlspecialchars($r['nama']) ?></div>
-            <div class="nc-sub"><?= htmlspecialchars($r['dept_nama'] ?? '—') ?></div></div>
+            <div class="nc-sub"><?= htmlspecialchars($r['dept_nama'] ?? '&mdash;') ?></div></div>
         </div></td>
         <td><span class="badge badge-blue"><?= htmlspecialchars($r['jenis_nama']) ?></span></td>
         <td class="text-sm"><?= formatTgl($r['tanggal_mulai']) ?></td>
@@ -85,10 +85,10 @@ include __DIR__.'/../../includes/header.php';
         <td>
             <?php if ($r['status'] === 'pending'): ?>
             <div class="flex gap-2">
-                <button class="btn btn-sm btn-primary" onclick="bukaCuti(<?= $r['id'] ?>,<?= (int)$r['jumlah_hari'] ?>,'disetujui')">✓</button>
-                <button class="btn btn-sm btn-danger"  onclick="bukaCuti(<?= $r['id'] ?>,0,'ditolak')">✗</button>
+                <button class="btn btn-sm btn-primary" onclick="bukaCuti(<?= $r['id'] ?>,<?= (int)$r['jumlah_hari'] ?>,'disetujui')"><span class="ui-icon i-check"></span> Setujui</button>
+                <button class="btn btn-sm btn-danger"  onclick="bukaCuti(<?= $r['id'] ?>,0,'ditolak')" aria-label="Tolak"><span class="ui-icon i-x"></span></button>
             </div>
-            <?php else: echo '—'; endif; ?>
+            <?php else: echo '&mdash;'; endif; ?>
         </td>
     </tr>
     <?php endwhile; endif; ?>
@@ -98,9 +98,9 @@ include __DIR__.'/../../includes/header.php';
 <div class="pagination">
     <span><?= $total ?> total</span>
     <div class="page-btns">
-        <?php if($page>1):?><a href="?status=<?=$stF?>&page=<?=$page-1?>" class="page-btn">‹</a><?php endif;?>
+        <?php if($page>1):?><a href="?status=<?=$stF?>&page=<?=$page-1?>" class="page-btn">&lsaquo;</a><?php endif;?>
         <?php for($i=max(1,$page-2);$i<=min($pages,$page+2);$i++):?><a href="?status=<?=$stF?>&page=<?=$i?>" class="page-btn <?=$i==$page?'active':''?>"><?=$i?></a><?php endfor;?>
-        <?php if($page<$pages):?><a href="?status=<?=$stF?>&page=<?=$page+1?>" class="page-btn">›</a><?php endif;?>
+        <?php if($page<$pages):?><a href="?status=<?=$stF?>&page=<?=$page+1?>" class="page-btn">&rsaquo;</a><?php endif;?>
     </div>
 </div>
 </div>
@@ -109,7 +109,7 @@ include __DIR__.'/../../includes/header.php';
 <div class="modal">
     <div class="modal-header">
         <span class="modal-title" id="mCutiTitle">Konfirmasi</span>
-        <button class="modal-close" onclick="closeModal('mCuti')">✕</button>
+        <button class="modal-close" onclick="closeModal('mCuti')" aria-label="Tutup"><span class="ui-icon i-x"></span></button>
     </div>
     <form method="POST">
     <input type="hidden" name="id"     id="cId">
@@ -133,7 +133,7 @@ include __DIR__.'/../../includes/header.php';
 function bukaCuti(id, hari, action) {
     document.getElementById('cId').value = id;
     document.getElementById('cAction').value = action;
-    document.getElementById('mCutiTitle').textContent = action === 'disetujui' ? '✓ Setujui Cuti' : '✗ Tolak Cuti';
+    document.getElementById('mCutiTitle').textContent = action === 'disetujui' ? 'Setujui Cuti' : 'Tolak Cuti';
     document.getElementById('cSubmitBtn').className = 'btn ' + (action === 'disetujui' ? 'btn-primary' : 'btn-danger');
     var info = document.getElementById('cInfo');
     if (action === 'disetujui' && hari > 0) {

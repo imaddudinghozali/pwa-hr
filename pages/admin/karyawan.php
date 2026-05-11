@@ -3,7 +3,7 @@ session_start();
 require_once __DIR__.'/../../config/database.php';
 requireAdmin();
 
-// ── POST: tambah / edit ───────────────────────────────────────
+// ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
     $id      = (int)$_POST['id'];
     $nama    = sanitize($_POST['nama']               ?? '');
@@ -28,9 +28,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
     $tunjOvr = strlen(trim($_POST['tunjangan_jabatan_override'] ?? '')) > 0
                 ? (float)$_POST['tunjangan_jabatan_override'] : null;
 
-    if (!$nama || !$nip) {
-        flash('error', 'Nama dan NIP wajib diisi.');
+    if (!$nama) {
+        flash('error', 'Nama wajib diisi.');
         redirect(BASE_URL.'/pages/admin/karyawan.php');
+    }
+
+    // Auto-generate NIP jika kosong (format EMP001, EMP002, ...)
+    if (!$nip && $id === 0) {
+        $r = db()->query("SELECT nip FROM users WHERE nip REGEXP '^EMP[0-9]+$' ORDER BY CAST(SUBSTRING(nip,4) AS UNSIGNED) DESC LIMIT 1");
+        $maxNum = 0;
+        if ($r && $row = $r->fetch_assoc()) $maxNum = (int)substr($row['nip'], 3);
+        // Pastikan tidak duplikat
+        do {
+            $maxNum++;
+            $nip = sprintf('EMP%03d', $maxNum);
+            $chk = db()->query("SELECT id FROM users WHERE nip='".esc($nip)."' LIMIT 1");
+        } while ($chk && $chk->num_rows > 0);
+    }
+
+    if (!$nip) {
+        flash('error', 'NIP wajib diisi (atau biarkan kosong untuk auto-generate).');
+        redirect(BASE_URL.'/pages/admin/karyawan.php');
+    }
+
+    // Cek duplikat NIP saat tambah baru
+    if ($id === 0) {
+        $dup = db()->query("SELECT id FROM users WHERE nip='".esc($nip)."' LIMIT 1");
+        if ($dup && $dup->num_rows > 0) {
+            flash('error', "NIP '$nip' sudah dipakai. Gunakan yang lain.");
+            redirect(BASE_URL.'/pages/admin/karyawan.php');
+        }
     }
 
     $tglKontSql = ($tglKont && $tglKont !== '') ? "'".esc($tglKont)."'" : 'NULL';
@@ -89,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
     redirect(BASE_URL.'/pages/admin/karyawan.php');
 }
 
-// ── DELETE ────────────────────────────────────────────────────
+// ---
 if (isset($_GET['hapus'])) {
     $id = (int)$_GET['hapus'];
     $r  = db()->query("SELECT nama FROM users WHERE id=$id")->fetch_assoc();
@@ -100,7 +127,7 @@ if (isset($_GET['hapus'])) {
     redirect(BASE_URL.'/pages/admin/karyawan.php');
 }
 
-// ── LIST ──────────────────────────────────────────────────────
+// ---
 $q      = sanitize($_GET['q']       ?? '');
 $deptF  = (int)($_GET['dept']       ?? 0);
 $stF    = sanitize($_GET['status']  ?? '');
@@ -135,9 +162,14 @@ $deptList  = getDepartemen();
 $jabList   = getJabatan();
 $shiftList = db()->query("SELECT * FROM shift ORDER BY nama")->fetch_all(MYSQLI_ASSOC);
 
+// Preview NIP berikutnya
+$rNip = db()->query("SELECT nip FROM users WHERE nip REGEXP '^EMP[0-9]+$' ORDER BY CAST(SUBSTRING(nip,4) AS UNSIGNED) DESC LIMIT 1");
+$maxNip = ($rNip && $row = $rNip->fetch_assoc()) ? (int)substr($row['nip'], 3) : 0;
+$nextNip = sprintf('EMP%03d', $maxNip + 1);
+
 $pageTitle      = 'Manajemen Karyawan';
 $activePage     = 'karyawan';
-$topbarActions  = '<a href="'.BASE_URL.'/pages/admin/export_karyawan.php" class="btn btn-sm">⬇ Export</a> <button class="btn btn-primary" onclick="openModal(\'mTambah\')">+ Tambah</button>';
+$topbarActions  = '<a href="'.BASE_URL.'/pages/admin/export_karyawan.php" class="btn btn-sm icon-label"><span class="ui-icon i-download"></span> Export</a> <button class="btn btn-primary icon-label" onclick="openModal(\'mTambah\')"><span class="ui-icon i-users"></span> Tambah</button>';
 include __DIR__.'/../../includes/header.php';
 ?>
 
@@ -145,14 +177,14 @@ include __DIR__.'/../../includes/header.php';
     $npw = $_SESSION['new_pw_info'];
     unset($_SESSION['new_pw_info']); ?>
 <div class="alert" style="background:#052e16;border:1px solid #16a34a;color:#bbf7d0;display:flex;align-items:center;gap:12px;flex-wrap:wrap" id="pwBanner">
-    <span style="font-size:18px">🔑</span>
+    <span class="ui-icon i-info ui-icon-md"></span>
     <div style="flex:1">
         <strong>Karyawan <?= htmlspecialchars($npw['nama']) ?> (<?= htmlspecialchars($npw['nip']) ?>) berhasil ditambahkan.</strong><br>
         <span style="font-size:12px">Password login: </span>
         <code id="pwDisplay" style="background:#166534;padding:2px 10px;border-radius:4px;font-size:14px;letter-spacing:1px;cursor:pointer" title="Klik untuk salin" onclick="copyPw()">
             <?= htmlspecialchars($npw['pw']) ?>
         </code>
-        <span id="pwCopied" style="display:none;font-size:11px;color:#4ade80;margin-left:6px">✔ Disalin!</span>
+        <span id="pwCopied" style="display:none;font-size:11px;color:#4ade80;margin-left:6px">Disalin!</span>
         <span style="font-size:11px;opacity:.7;margin-left:8px">Klik password untuk menyalin. Catat dan sampaikan ke karyawan.</span>
     </div>
     <button class="btn btn-sm" style="border-color:#16a34a;color:#bbf7d0" onclick="document.getElementById('pwBanner').remove()">Tutup</button>
@@ -167,7 +199,7 @@ function copyPw() {
 
 <?php if ($nearExpiry && $nearExpiry->num_rows > 0): ?>
 <div class="alert alert-amber" style="display:flex;align-items:center;gap:10px">
-    <span style="font-size:18px">⚠</span>
+    <span class="ui-icon i-alert ui-icon-md"></span>
     <div>
         <strong>Kontrak Akan Habis!</strong>
         <?php while ($e = $nearExpiry->fetch_assoc()): ?>
@@ -236,23 +268,23 @@ function copyPw() {
         </div></td>
         <td class="mono text-sm"><?= htmlspecialchars($r['nip']) ?></td>
         <td><span class="badge <?= $bjk[$r['jenis_karyawan']??'tetap'] ?? 'badge-gray' ?>"><?= ucfirst($r['jenis_karyawan']??'tetap') ?></span></td>
-        <td class="text-sm"><?= htmlspecialchars($r['dept_nama'] ?? '—') ?></td>
-        <td class="text-sm"><?= htmlspecialchars($r['jabatan_nama'] ?? '—') ?></td>
-        <td><span class="badge badge-purple text-xs"><?= htmlspecialchars($r['shift_nama'] ?? '—') ?></span></td>
+        <td class="text-sm"><?= htmlspecialchars($r['dept_nama'] ?? '&mdash;') ?></td>
+        <td class="text-sm"><?= htmlspecialchars($r['jabatan_nama'] ?? '&mdash;') ?></td>
+        <td><span class="badge badge-purple text-xs"><?= htmlspecialchars($r['shift_nama'] ?? '&mdash;') ?></span></td>
         <td><span class="badge <?= $bs[$r['status']] ?? 'badge-gray' ?>"><?= ucfirst($r['status']) ?></span></td>
         <td class="text-sm">
             <?php if ($r['jenis_karyawan']==='kontrak' && !empty($r['tanggal_kontrak_selesai'])): ?>
             <span style="<?= $kontrakHabis?'color:#fcd34d;font-weight:600':'' ?>">
                 <?= formatTgl($r['tanggal_kontrak_selesai']) ?>
-                <?php if ($kontrakHabis): ?><span style="font-size:10px"> ⚠</span><?php endif; ?>
+                <?php if ($kontrakHabis): ?><span class="ui-icon i-alert ui-icon-sm" style="color:var(--amber);margin-left:4px"></span><?php endif; ?>
             </span>
-            <?php else: ?>—<?php endif; ?>
+            <?php else: ?>&mdash;<?php endif; ?>
         </td>
         <td>
             <div class="flex gap-2">
                 <a href="<?= BASE_URL ?>/pages/admin/karyawan_detail.php?id=<?= $r['id'] ?>" class="btn btn-sm">Detail</a>
                 <button class="btn btn-sm" onclick='editKar(<?= json_encode($r, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP) ?>)'>Edit</button>
-                <button class="btn btn-sm btn-danger" onclick="confirmDel('<?= BASE_URL ?>/pages/admin/karyawan.php?hapus=<?= $r['id'] ?>','<?= htmlspecialchars($r['nama'],ENT_QUOTES) ?>')">✕</button>
+                <button class="btn btn-sm btn-danger" onclick="confirmDel('<?= BASE_URL ?>/pages/admin/karyawan.php?hapus=<?= $r['id'] ?>','<?= htmlspecialchars($r['nama'],ENT_QUOTES) ?>')" aria-label="Hapus karyawan"><span class="ui-icon i-x"></span></button>
             </div>
         </td>
     </tr>
@@ -261,22 +293,22 @@ function copyPw() {
 </table>
 </div>
 <div class="pagination">
-    <span>Hal <?= $page ?>/<?= $pages ?> · <?= $total ?> total</span>
+    <span>Hal <?= $page ?>/<?= $pages ?> &middot; <?= $total ?> total</span>
     <div class="page-btns">
-        <?php if($page>1):?><a href="?q=<?=urlencode($q)?>&dept=<?=$deptF?>&status=<?=$stF?>&jenis=<?=$jenisF?>&page=<?=$page-1?>" class="page-btn">‹</a><?php endif;?>
+        <?php if($page>1):?><a href="?q=<?=urlencode($q)?>&dept=<?=$deptF?>&status=<?=$stF?>&jenis=<?=$jenisF?>&page=<?=$page-1?>" class="page-btn">&lsaquo;</a><?php endif;?>
         <?php for($i=max(1,$page-2);$i<=min($pages,$page+2);$i++):?><a href="?q=<?=urlencode($q)?>&dept=<?=$deptF?>&status=<?=$stF?>&jenis=<?=$jenisF?>&page=<?=$i?>" class="page-btn <?=$i==$page?'active':''?>"><?=$i?></a><?php endfor;?>
-        <?php if($page<$pages):?><a href="?q=<?=urlencode($q)?>&dept=<?=$deptF?>&status=<?=$stF?>&jenis=<?=$jenisF?>&page=<?=$page+1?>" class="page-btn">›</a><?php endif;?>
+        <?php if($page<$pages):?><a href="?q=<?=urlencode($q)?>&dept=<?=$deptF?>&status=<?=$stF?>&jenis=<?=$jenisF?>&page=<?=$page+1?>" class="page-btn">&rsaquo;</a><?php endif;?>
     </div>
 </div>
 </div>
 
 <?php
-function formKaryawan(string $modalId, string $title, array $deptList, array $jabList, array $shiftList): void { ?>
+function formKaryawan(string $modalId, string $title, array $deptList, array $jabList, array $shiftList, string $nextNip = ''): void { ?>
 <div class="modal-overlay" id="<?= $modalId ?>">
 <div class="modal modal-lg">
     <div class="modal-header">
         <span class="modal-title"><?= $title ?></span>
-        <button class="modal-close" onclick="closeModal('<?= $modalId ?>')">✕</button>
+        <button class="modal-close" onclick="closeModal('<?= $modalId ?>')" aria-label="Tutup"><span class="ui-icon i-x"></span></button>
     </div>
     <form method="POST">
     <input type="hidden" name="id" id="<?= $modalId ?>_id" value="0">
@@ -284,29 +316,29 @@ function formKaryawan(string $modalId, string $title, array $deptList, array $ja
         <div class="form-grid">
             <div class="form-group"><label class="form-label">Nama *</label>
                 <input type="text" name="nama" id="<?= $modalId ?>_nama" class="form-control" required></div>
-            <div class="form-group"><label class="form-label">NIP *</label>
-                <input type="text" name="nip" id="<?= $modalId ?>_nip" class="form-control" required></div>
+            <div class="form-group"><label class="form-label">NIP <?= $modalId==='mTambah'?'<span class="form-hint">(kosong = auto '.htmlspecialchars($nextNip).')</span>':'*' ?></label>
+                <input type="text" name="nip" id="<?= $modalId ?>_nip" class="form-control" <?= $modalId==='mEdit'?'required':'' ?> placeholder="<?= $modalId==='mTambah'?'Kosongkan untuk auto: '.htmlspecialchars($nextNip):'' ?>"></div>
             <div class="form-group"><label class="form-label">Email</label>
                 <input type="email" name="email" id="<?= $modalId ?>_email" class="form-control"></div>
             <div class="form-group"><label class="form-label">Telepon</label>
                 <input type="text" name="telepon" id="<?= $modalId ?>_telp" class="form-control"></div>
             <div class="form-group"><label class="form-label">Departemen</label>
                 <select name="departemen_id" id="<?= $modalId ?>_dept" class="form-control">
-                    <option value="0">— Pilih —</option>
+                    <option value="0">&mdash; Pilih &mdash;</option>
                     <?php foreach ($deptList as $d): ?>
                     <option value="<?= $d['id'] ?>"><?= htmlspecialchars($d['nama']) ?></option>
                     <?php endforeach; ?>
                 </select></div>
             <div class="form-group"><label class="form-label">Jabatan</label>
                 <select name="jabatan_id" id="<?= $modalId ?>_jab" class="form-control">
-                    <option value="0">— Pilih —</option>
+                    <option value="0">&mdash; Pilih &mdash;</option>
                     <?php foreach ($jabList as $j): ?>
                     <option value="<?= $j['id'] ?>"><?= htmlspecialchars($j['nama']) ?></option>
                     <?php endforeach; ?>
                 </select></div>
             <div class="form-group"><label class="form-label">Shift</label>
                 <select name="shift_id" id="<?= $modalId ?>_shift" class="form-control">
-                    <option value="0">— Pilih —</option>
+                    <option value="0">&mdash; Pilih &mdash;</option>
                     <?php foreach ($shiftList as $s): ?>
                     <option value="<?= $s['id'] ?>"><?= htmlspecialchars($s['nama']) ?></option>
                     <?php endforeach; ?>
@@ -366,8 +398,8 @@ function formKaryawan(string $modalId, string $title, array $deptList, array $ja
 </div>
 <?php } ?>
 
-<?php formKaryawan('mTambah','Tambah Karyawan Baru',$deptList,$jabList,$shiftList); ?>
-<?php formKaryawan('mEdit','Edit Karyawan',$deptList,$jabList,$shiftList); ?>
+<?php formKaryawan('mTambah','Tambah Karyawan Baru',$deptList,$jabList,$shiftList,$nextNip); ?>
+<?php formKaryawan('mEdit','Edit Karyawan',$deptList,$jabList,$shiftList,$nextNip); ?>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

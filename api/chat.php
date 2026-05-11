@@ -1,38 +1,49 @@
 <?php
+// Suppress PHP warnings ke output (penting untuk JSON valid di hosting)
+ini_set('display_errors', '0');
+error_reporting(E_ERROR | E_PARSE);
+
 session_start();
 require_once __DIR__.'/../config/database.php';
-requireLogin();
 
-header('Content-Type: application/json');
+// Helper output JSON harus didefinisikan sebelum requireLogin
+function jsonOut(array $data): void {
+    if (!headers_sent()) header('Content-Type: application/json; charset=utf-8');
+    echo json_encode($data);
+    exit;
+}
+
+if (!isLoggedIn()) jsonOut(['ok'=>false,'msg'=>'Tidak login','redirect'=>BASE_URL.'/login.php']);
+
 $me   = currentUser();
+if (!$me) jsonOut(['ok'=>false,'msg'=>'Session invalid']);
 $uid  = (int)$me['id'];
 $act  = sanitize($_REQUEST['action'] ?? '');
 
-// ── Helper ────────────────────────────────────────────────────
-function jsonOut(array $data): void { echo json_encode($data); exit; }
+if (!headers_sent()) header('Content-Type: application/json; charset=utf-8');
 
-// ── Daftar rooms yang diikuti user ────────────────────────────
+// ---
 if ($act === 'get_rooms') {
     $rows = db()->query("
-        SELECT cr.id, cr.nama, cr.tipe,
+        SELECT cr.id, cr.nama, cr.tipe, crm.last_read_at,
             (SELECT cm.pesan FROM chat_messages cm WHERE cm.room_id=cr.id ORDER BY cm.created_at DESC LIMIT 1) last_msg,
             (SELECT cm.created_at FROM chat_messages cm WHERE cm.room_id=cr.id ORDER BY cm.created_at DESC LIMIT 1) last_at,
             (SELECT u.nama FROM chat_messages cm JOIN users u ON cm.sender_id=u.id WHERE cm.room_id=cr.id ORDER BY cm.created_at DESC LIMIT 1) last_sender,
             (SELECT COUNT(*) FROM chat_messages cm2 WHERE cm2.room_id=cr.id
                 AND cm2.sender_id!=$uid
-                AND (crm2.last_read_at IS NULL OR cm2.created_at > crm2.last_read_at)
+                AND (crm.last_read_at IS NULL OR cm2.created_at > crm.last_read_at)
             ) unread
         FROM chat_rooms cr
         JOIN chat_room_members crm ON crm.room_id=cr.id AND crm.user_id=$uid
-        JOIN chat_room_members crm2 ON crm2.room_id=cr.id AND crm2.user_id=$uid
         ORDER BY last_at DESC, cr.id ASC
     ");
+    if (!$rows) jsonOut(['ok'=>false,'msg'=>'DB Error: '.db()->error]);
     $rooms = [];
-    if ($rows) while ($r = $rows->fetch_assoc()) $rooms[] = $r;
+    while ($r = $rows->fetch_assoc()) $rooms[] = $r;
     jsonOut(['ok'=>true,'rooms'=>$rooms]);
 }
 
-// ── Dapatkan atau buat private room antara 2 user ─────────────
+// ---
 if ($act === 'get_or_create_room') {
     $targetId = (int)($_POST['target_id'] ?? 0);
     if (!$targetId) jsonOut(['ok'=>false,'msg'=>'target_id required']);
@@ -59,7 +70,7 @@ if ($act === 'get_or_create_room') {
     }
 }
 
-// ── Ambil pesan dalam room ────────────────────────────────────
+// ---
 if ($act === 'get_messages') {
     $roomId  = (int)($_GET['room_id'] ?? 0);
     $lastId  = (int)($_GET['last_id'] ?? 0);
@@ -100,7 +111,7 @@ if ($act === 'get_messages') {
     jsonOut(['ok'=>true,'messages'=>$msgs,'room'=>$roomInfo,'my_id'=>$uid]);
 }
 
-// ── Kirim pesan ───────────────────────────────────────────────
+// ---
 if ($act === 'send_message') {
     $roomId = (int)($_POST['room_id'] ?? 0);
     $pesan  = trim($_POST['pesan']    ?? '');
@@ -110,13 +121,14 @@ if ($act === 'send_message') {
     if (!$mem) jsonOut(['ok'=>false,'msg'=>'Tidak diizinkan']);
 
     $pesan_e = esc(substr($pesan, 0, 2000));
-    db()->query("INSERT INTO chat_messages (room_id,sender_id,pesan) VALUES ($roomId,$uid,'$pesan_e')");
+    $ok = db()->query("INSERT INTO chat_messages (room_id,sender_id,pesan) VALUES ($roomId,$uid,'$pesan_e')");
+    if (!$ok) jsonOut(['ok'=>false,'msg'=>'Gagal kirim: '.db()->error]);
     $newId = (int)db()->insert_id;
 
     jsonOut(['ok'=>true,'id'=>$newId]);
 }
 
-// ── Daftar user untuk mulai chat baru ─────────────────────────
+// ---
 if ($act === 'get_users') {
     $rows = db()->query("SELECT id,nama,role,jabatan_id,
         (SELECT j.nama FROM jabatan j WHERE j.id=users.jabatan_id) jabatan_nama

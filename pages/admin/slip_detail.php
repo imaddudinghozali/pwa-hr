@@ -15,13 +15,14 @@ $slip = db()->query("SELECT sg.*,u.nama,u.nip,u.no_rekening,u.nama_bank,u.telepo
 if (!$slip) redirect(BASE_URL.'/pages/admin/penggajian.php');
 
 $pageTitle  = 'Detail Slip Gaji';
-$pageSub    = bulanNama($slip['bulan']).' '.$slip['tahun'].' — '.htmlspecialchars($slip['nama']);
+$pageSub    = bulanNama($slip['bulan']).' '.$slip['tahun'].' &mdash; '.htmlspecialchars($slip['nama']);
 $activePage = 'penggajian';
-$topbarActions = '<button class="btn btn-sm" onclick="printSlip()">🖨 Cetak</button> <a href="'.BASE_URL.'/pages/admin/penggajian.php" class="btn btn-sm">← Kembali</a>';
+$topbarActions = '<button class="btn btn-sm icon-label" onclick="printSlip()"><span class="ui-icon i-printer"></span> Cetak</button> <a href="'.BASE_URL.'/pages/admin/penggajian.php" class="btn btn-sm icon-label"><span class="ui-icon i-arrow-left"></span> Kembali</a>';
 include __DIR__.'/../../includes/header.php';
 
 $tunj = (float)$slip['tunjangan_jabatan']+(float)$slip['tunjangan_makan']+(float)$slip['tunjangan_transport'];
-$pot  = (float)$slip['potongan_absen']+(float)$slip['potongan_bpjs_tk']+(float)$slip['potongan_bpjs_kes']+(float)$slip['potongan_pph21'];
+$pendapatan = (float)$slip['gaji_pokok']+$tunj+(float)($slip['bonus'] ?? 0)+(float)$slip['upah_lembur'];
+$pot  = (float)$slip['potongan_absen']+(float)$slip['potongan_bpjs_tk']+(float)$slip['potongan_bpjs_kes']+(float)$slip['potongan_pph21']+(float)($slip['potongan_lain'] ?? 0);
 $bsSt = ['draft'=>'badge-amber','final'=>'badge-blue','dibayar'=>'badge-green'];
 ?>
 
@@ -31,19 +32,19 @@ $bsSt = ['draft'=>'badge-amber','final'=>'badge-blue','dibayar'=>'badge-green'];
             <div>
                 <div class="slip-company">PT Pesta Hijau Abadi</div>
                 <div style="font-size:11px;color:var(--text-m)">info@pestahijau.co.id</div>
-                <div class="slip-period">Slip Gaji — <?=bulanNama($slip['bulan']).' '.$slip['tahun']?></div>
+                <div class="slip-period">Slip Gaji &mdash; <?=bulanNama($slip['bulan']).' '.$slip['tahun']?></div>
             </div>
             <span class="badge <?=$bsSt[$slip['status']]??'badge-gray'?>"><?=ucfirst($slip['status'])?></span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
-            <?php foreach ([['Nama',$slip['nama']],['NIP',$slip['nip']],['Jabatan',$slip['jabatan_nama']??'—'],['Departemen',$slip['dept_nama']??'—'],['Rekening',$slip['no_rekening']??'—'],['Bank',$slip['nama_bank']??'—']] as [$k,$v]): ?>
+            <?php foreach ([['Nama',$slip['nama']],['NIP',$slip['nip']],['Jabatan',$slip['jabatan_nama']??'&mdash;'],['Departemen',$slip['dept_nama']??'&mdash;'],['Rekening',$slip['no_rekening']??'&mdash;'],['Bank',$slip['nama_bank']??'&mdash;']] as [$k,$v]): ?>
             <div><span class="text-muted text-xs"><?=$k?></span><br><strong><?=htmlspecialchars($v)?></strong></div>
             <?php endforeach; ?>
         </div>
     </div>
 
     <div class="card mb-2">
-        <div class="card-header"><span class="card-title">Kehadiran</span></div>
+        <div class="card-header"><span class="card-title">Referensi Kehadiran</span></div>
         <div class="card-body" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;text-align:center">
             <?php foreach ([['Hadir',$slip['hari_hadir'],'var(--green-400)'],['Hari Kerja',$slip['hari_kerja'],'var(--text-1)'],['Alpha',$slip['hari_alpha'],'var(--red)'],['Jam Lembur',$slip['total_lembur_jam'],'var(--blue)']] as [$k,$v,$c]): ?>
             <div style="padding:12px;background:var(--surface-2);border-radius:var(--r)">
@@ -60,17 +61,18 @@ $bsSt = ['draft'=>'badge-amber','final'=>'badge-blue','dibayar'=>'badge-green'];
             <div style="margin-bottom:1rem">
                 <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--green-400);margin-bottom:10px">+ PENDAPATAN</div>
                 <?php $items=[['Gaji Pokok',$slip['gaji_pokok'],''],['Tunjangan Jabatan',$slip['tunjangan_jabatan'],''],['Tunjangan Makan',$slip['tunjangan_makan'],''],['Tunjangan Transport',$slip['tunjangan_transport'],'']];
+                if ((float)($slip['bonus'] ?? 0)>0) $items[]=['Bonus',$slip['bonus'],'text-green'];
                 if ($slip['upah_lembur']>0) $items[]=['Upah Lembur ('.$slip['total_lembur_jam'].' jam)',$slip['upah_lembur'],'text-blue'];
                 foreach ($items as [$k,$v,$cls]): ?>
                 <div class="slip-row"><span><?=$k?></span><span class="<?=$cls?>"><?=formatRp($v)?></span></div>
                 <?php endforeach; ?>
                 <div class="slip-row" style="font-weight:600;border-top:1px solid var(--border-md);padding-top:8px;margin-top:4px">
-                    <span>Jumlah Pendapatan</span><strong><?=formatRp((float)$slip['gaji_pokok']+$tunj+(float)$slip['upah_lembur'])?></strong>
+                    <span>Jumlah Pendapatan</span><strong><?=formatRp($pendapatan)?></strong>
                 </div>
             </div>
             <div style="margin-bottom:1rem">
-                <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#fca5a5;margin-bottom:10px">− POTONGAN</div>
-                <?php $pots=[['Pot. Ketidakhadiran',$slip['potongan_absen']],['BPJS TK (2%)',$slip['potongan_bpjs_tk']],['BPJS Kes (1%)',$slip['potongan_bpjs_kes']],['PPh 21 (5%)',$slip['potongan_pph21']]];
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#fca5a5;margin-bottom:10px">- POTONGAN</div>
+                <?php $pots=[['Pot. Ketidakhadiran',$slip['potongan_absen']],['BPJS Ketenagakerjaan',$slip['potongan_bpjs_tk']],['BPJS Kesehatan',$slip['potongan_bpjs_kes']],['PPh 21',$slip['potongan_pph21']],['Potongan Lain-lain',$slip['potongan_lain'] ?? 0]];
                 foreach ($pots as [$k,$v]): if ($v>0): ?>
                 <div class="slip-row"><span><?=$k?></span><span class="text-red"><?=formatRp($v)?></span></div>
                 <?php endif; endforeach; ?>
@@ -79,11 +81,16 @@ $bsSt = ['draft'=>'badge-amber','final'=>'badge-blue','dibayar'=>'badge-green'];
                 </div>
             </div>
             <div class="slip-row total">
-                <span>💰 GAJI BERSIH</span>
+                <span>GAJI BERSIH</span>
                 <strong style="font-size:18px"><?=formatRp($slip['gaji_bersih'])?></strong>
             </div>
             <?php if ($slip['tanggal_bayar']): ?>
             <div style="margin-top:10px;text-align:right;font-size:12px;color:var(--text-m)">Dibayar: <?=formatTgl($slip['tanggal_bayar'])?></div>
+            <?php endif; ?>
+            <?php if (!empty($slip['catatan'])): ?>
+            <div style="margin-top:14px;padding:12px;background:var(--surface-2);border-radius:var(--r);font-size:13px">
+                <strong>Catatan:</strong><br><?= nl2br(htmlspecialchars($slip['catatan'])) ?>
+            </div>
             <?php endif; ?>
         </div>
     </div>

@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link rel="manifest" href="<?= BASE_URL ?>/manifest.json">
 <link rel="apple-touch-icon" href="<?= BASE_URL ?>/assets/icons/icon-192.png">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app.css">
-<title>Login — SIMK PT Pesta Hijau Abadi</title>
+<title>Login &mdash; SIMK PT Pesta Hijau Abadi</title>
 </head>
 <body>
 <div class="login-page">
@@ -84,10 +84,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                            placeholder="Masukkan password" required style="padding-right:42px">
                     <button type="button" onclick="togglePass(this)"
                         style="position:absolute;right:10px;top:50%;transform:translateY(-50%);
-                               background:none;border:none;cursor:pointer;color:var(--text-m);font-size:16px">👁</button>
+                               background:none;border:none;cursor:pointer;color:var(--text-m);font-size:16px"
+                        aria-label="Tampilkan password"><span class="ui-icon i-eye"></span></button>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary btn-xl">Masuk →</button>
+            <button type="submit" class="btn btn-primary btn-xl icon-label">Masuk <span class="ui-icon i-arrow-right"></span></button>
         </form>
 
         <div style="margin-top:1.5rem;padding:1rem;background:var(--surface-2);
@@ -97,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             HRD: <code>HRD001</code> &nbsp;|&nbsp;
             Karyawan: <code>EMP001</code><br>
             Password: <code>Admin@123</code><br><br>
-            <span style="color:#fcd34d">⚠ Pertama kali? Jalankan dulu →</span>
+            <span class="icon-label" style="color:#fcd34d"><span class="ui-icon i-alert"></span> Pertama kali? Jalankan dulu</span>
             <a href="<?= BASE_URL ?>/setup.php" style="color:#4ade80;font-weight:600"> setup.php</a>
         </div>
     </div>
@@ -106,7 +107,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 function togglePass(btn) {
     var i = document.getElementById('inp-pass');
     i.type = i.type === 'password' ? 'text' : 'password';
-    btn.textContent = i.type === 'password' ? '👁' : '🙈';
+    btn.innerHTML = i.type === 'password'
+        ? '<span class="ui-icon i-eye"></span>'
+        : '<span class="ui-icon i-eye-off"></span>';
+    btn.setAttribute('aria-label', i.type === 'password' ? 'Tampilkan password' : 'Sembunyikan password');
 }
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('<?= BASE_URL ?>/sw.js');

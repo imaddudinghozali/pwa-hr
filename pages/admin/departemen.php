@@ -3,7 +3,7 @@ session_start();
 require_once __DIR__.'/../../config/database.php';
 requireAdmin();
 
-// ── POST: tambah / edit ───────────────────────────────────────
+// ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id     = (int)($_POST['id'] ?? 0);
     $nama   = sanitize($_POST['nama']        ?? '');
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect(BASE_URL.'/pages/admin/departemen.php');
 }
 
-// ── DELETE ────────────────────────────────────────────────────
+// ---
 if (isset($_GET['hapus'])) {
     $id = (int)$_GET['hapus'];
     $r  = db()->query("SELECT nama FROM departemen WHERE id=$id")->fetch_assoc();
@@ -50,7 +50,7 @@ if (isset($_GET['hapus'])) {
     redirect(BASE_URL.'/pages/admin/departemen.php');
 }
 
-// ── LIST ──────────────────────────────────────────────────────
+// ---
 $rows = db()->query("SELECT d.*, COUNT(u.id) jml
     FROM departemen d
     LEFT JOIN users u ON u.departemen_id = d.id
@@ -58,12 +58,12 @@ $rows = db()->query("SELECT d.*, COUNT(u.id) jml
 
 $pageTitle     = 'Departemen';
 $activePage    = 'departemen';
-$topbarActions = '<button class="btn btn-primary" onclick="openModal(\'mDept\')">+ Tambah Departemen</button>';
+$topbarActions = '<button class="btn btn-primary icon-label" onclick="openModal(\'mDept\')"><span class="ui-icon i-building"></span> Tambah Departemen</button>';
 include __DIR__.'/../../includes/header.php';
 ?>
 
-<div class="alert alert-info mb-2" style="font-size:13px">
-    📍 Koordinat GPS digunakan sebagai pusat validasi radius absensi per departemen.
+<div class="alert alert-info mb-2 icon-label" style="font-size:13px">
+    <span class="ui-icon i-info"></span> <span>Koordinat GPS digunakan sebagai pusat validasi radius absensi per departemen.</span>
 </div>
 
 <div class="card">
@@ -83,9 +83,9 @@ include __DIR__.'/../../includes/header.php';
                 <?= htmlspecialchars($r['kode']) ?>
             </code>
         </td>
-        <td class="text-sm"><?= htmlspecialchars($r['kepala'] ?? '—') ?></td>
+        <td class="text-sm"><?= htmlspecialchars($r['kepala'] ?? '&mdash;') ?></td>
         <td class="mono text-xs text-muted">
-            <?= $r['lokasi_lat'] ? $r['lokasi_lat'].', '.$r['lokasi_lng'] : '—' ?>
+            <?= $r['lokasi_lat'] ? $r['lokasi_lat'].', '.$r['lokasi_lng'] : '&mdash;' ?>
         </td>
         <td class="text-sm"><?= (int)$r['radius_absen'] ?>m</td>
         <td class="text-sm"><?= (int)$r['jml'] ?> orang</td>
@@ -96,8 +96,9 @@ include __DIR__.'/../../includes/header.php';
                     Edit
                 </button>
                 <button class="btn btn-sm btn-danger"
-                    onclick="confirmDel('<?= BASE_URL ?>/pages/admin/departemen.php?hapus=<?= $r['id'] ?>','<?= htmlspecialchars($r['nama'], ENT_QUOTES) ?>')">
-                    ✕
+                    onclick="confirmDel('<?= BASE_URL ?>/pages/admin/departemen.php?hapus=<?= $r['id'] ?>','<?= htmlspecialchars($r['nama'], ENT_QUOTES) ?>')"
+                    aria-label="Hapus departemen">
+                    <span class="ui-icon i-x"></span>
                 </button>
             </div>
         </td>
@@ -113,7 +114,7 @@ include __DIR__.'/../../includes/header.php';
 <div class="modal">
     <div class="modal-header">
         <span class="modal-title" id="mDeptTitle">Tambah Departemen</span>
-        <button class="modal-close" onclick="closeModal('mDept')">✕</button>
+        <button class="modal-close" onclick="closeModal('mDept')" aria-label="Tutup"><span class="ui-icon i-x"></span></button>
     </div>
     <form method="POST">
     <input type="hidden" name="id" id="dId" value="0">
@@ -152,7 +153,7 @@ include __DIR__.'/../../includes/header.php';
             </div>
         </div>
         <div class="alert alert-info mt-1" style="font-size:12px">
-            💡 Cara dapat koordinat: buka Google Maps → klik kanan lokasi kantor → salin angka koordinat
+            Cara dapat koordinat: buka Google Maps, klik kanan lokasi kantor, lalu salin angka koordinat.
         </div>
     </div>
     <div class="modal-footer">

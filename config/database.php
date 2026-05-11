@@ -1,14 +1,30 @@
 <?php
 // ============================================================
-// config/database.php  —  SIMK PHA
+// config/database.php  &mdash;  SIMK PHA
 // ============================================================
 
 define('DB_HOST',      'localhost');
 define('DB_USER',      'root');
 define('DB_PASS',      '');
 define('DB_NAME',      'simk_pha');
-define('BASE_URL',     'http://localhost/pwa-hr');   // ← Sesuaikan nama folder
 define('APP_NAME',     'SIMK PHA');
+
+// ---
+// Untuk override manual: define('BASE_URL', 'https://domain.com'); SEBELUM file ini di-include
+if (!defined('BASE_URL')) {
+    $proto = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+          || (($_SERVER['SERVER_PORT'] ?? 80) == 443)
+          || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+          ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $docRoot  = isset($_SERVER['DOCUMENT_ROOT']) ? str_replace('\\', '/', realpath($_SERVER['DOCUMENT_ROOT'])) : '';
+    $projRoot = str_replace('\\', '/', dirname(__DIR__));
+    $basePath = '';
+    if ($docRoot && $projRoot && strpos($projRoot, $docRoot) === 0) {
+        $basePath = substr($projRoot, strlen($docRoot));
+    }
+    define('BASE_URL', $proto.'://'.$host.$basePath);
+}
 define('COMPANY_NAME', 'PT Pesta Hijau Abadi');
 
 // Koordinat kantor utama (fallback jika departemen belum diatur)
@@ -16,7 +32,7 @@ define('KANTOR_LAT',   -6.2088);
 define('KANTOR_LNG',   106.8456);
 define('ABSEN_RADIUS', 200);   // meter
 
-// ── Database ──────────────────────────────────────────────────
+// ---
 function db(): mysqli {
     static $conn = null;
     if ($conn === null) {
@@ -41,7 +57,7 @@ function dbPrepare(string $sql): mysqli_stmt {
     return $stmt;
 }
 
-// ── Sanitize / Escape ─────────────────────────────────────────
+// ---
 function sanitize(mixed $v): string {
     return htmlspecialchars(strip_tags(trim((string)$v)));
 }
@@ -49,10 +65,10 @@ function esc(mixed $v): string {
     return db()->real_escape_string((string)$v);
 }
 
-// ── HTTP ──────────────────────────────────────────────────────
+// ---
 function redirect(string $url): void { header("Location: $url"); exit; }
 
-// ── Flash Messages ────────────────────────────────────────────
+// ---
 function flash(string $type, string $msg): void {
     $_SESSION['flash'] = ['type' => $type, 'msg' => $msg];
 }
@@ -65,14 +81,14 @@ function getFlash(): ?array {
     return null;
 }
 
-// ── Formatting ────────────────────────────────────────────────
+// ---
 function formatRp(float $n): string {
     return 'Rp '.number_format($n, 0, ',', '.');
 }
 function formatTgl(string $d = ''): string {
-    if (!$d || $d === '0000-00-00') return '—';
+    if (!$d || $d === '0000-00-00') return '&mdash;';
     $ts = strtotime($d);
-    if ($ts === false) return '—';
+    if ($ts === false) return '&mdash;';
     $bln = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
     return date('d',$ts).' '.$bln[(int)date('n',$ts)].' '.date('Y',$ts);
 }
@@ -81,7 +97,7 @@ function bulanNama(int $n): string {
             'Juli','Agustus','September','Oktober','November','Desember'][$n] ?? '';
 }
 
-// ── Avatar ────────────────────────────────────────────────────
+// ---
 function initials(string $nama): string {
     $p = array_values(array_filter(explode(' ', trim($nama))));
     if (empty($p)) return '?';
@@ -92,7 +108,7 @@ function avatarBg(int $id): string {
     return $c[$id % count($c)];
 }
 
-// ── GPS ───────────────────────────────────────────────────────
+// ---
 function hitungJarak(float $lat1, float $lng1, float $lat2, float $lng2): float {
     $R    = 6371000;
     $dLat = deg2rad($lat2-$lat1);
@@ -101,7 +117,7 @@ function hitungJarak(float $lat1, float $lng1, float $lat2, float $lng2): float 
     return $R * 2 * atan2(sqrt($a), sqrt(1-$a));
 }
 
-// ── Auth ──────────────────────────────────────────────────────
+// ---
 function isLoggedIn(): bool { return !empty($_SESSION['user_id']); }
 
 function currentUser(): ?array {
@@ -134,7 +150,7 @@ function requireAdmin(): void {
         redirect(BASE_URL.'/pages/karyawan/dashboard.php');
 }
 
-// ── Master data helpers ───────────────────────────────────────
+// ---
 function getDepartemen(): array {
     $r = db()->query("SELECT * FROM departemen ORDER BY nama");
     return $r ? $r->fetch_all(MYSQLI_ASSOC) : [];

@@ -77,7 +77,7 @@ include __DIR__.'/../../includes/header.php';
             <td><span class="badge badge-purple"><?=(int)$r['jumlah_hari']?> hari</span></td>
             <td class="text-sm text-muted"><?=htmlspecialchars(substr($r['alasan']??'',0,40))?></td>
             <td><span class="badge <?=$bs[$r['status']]??'badge-gray'?>"><?=ucfirst($r['status'])?></span></td>
-            <td class="text-sm text-muted"><?=htmlspecialchars(substr($r['catatan_approver']??'—',0,35))?></td>
+            <td class="text-sm text-muted"><?=htmlspecialchars(substr($r['catatan_approver']??'&mdash;',0,35))?></td>
         </tr>
         <?php endwhile; endif;?>
         </tbody>
@@ -85,22 +85,22 @@ include __DIR__.'/../../includes/header.php';
     <div class="pagination">
         <span><?=$total?> pengajuan</span>
         <div class="page-btns">
-            <?php if($page>1):?><a href="?page=<?=$page-1?>" class="page-btn">‹</a><?php endif;?>
+            <?php if($page>1):?><a href="?page=<?=$page-1?>" class="page-btn">&lsaquo;</a><?php endif;?>
             <?php for($i=max(1,$page-2);$i<=min($pages,$page+2);$i++):?><a href="?page=<?=$i?>" class="page-btn <?=$i==$page?'active':''?>"><?=$i?></a><?php endfor;?>
-            <?php if($page<$pages):?><a href="?page=<?=$page+1?>" class="page-btn">›</a><?php endif;?>
+            <?php if($page<$pages):?><a href="?page=<?=$page+1?>" class="page-btn">&rsaquo;</a><?php endif;?>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay" id="mCuti">
 <div class="modal">
-    <div class="modal-header"><span class="modal-title">Ajukan Cuti</span><button class="modal-close" onclick="closeModal('mCuti')">✕</button></div>
+    <div class="modal-header"><span class="modal-title">Ajukan Cuti</span><button class="modal-close" onclick="closeModal('mCuti')" aria-label="Tutup"><span class="ui-icon i-x"></span></button></div>
     <form method="POST"><input type="hidden" name="jumlah_hari" id="hidden-hari" value="0">
     <div class="modal-body">
         <div class="form-grid">
             <div class="form-group form-full"><label class="form-label">Jenis Cuti *</label>
                 <select name="jenis_cuti_id" class="form-control" required>
-                    <option value="">— Pilih jenis —</option>
+                    <option value="">&mdash; Pilih jenis &mdash;</option>
                     <?php foreach ($jenisList as $j): ?><option value="<?=$j['id']?>"><?=htmlspecialchars($j['nama'])?> (maks <?=$j['max_hari']?> hari)</option><?php endforeach;?>
                 </select></div>
             <div class="form-group"><label class="form-label">Tanggal Mulai *</label>
@@ -108,7 +108,7 @@ include __DIR__.'/../../includes/header.php';
             <div class="form-group"><label class="form-label">Tanggal Selesai *</label>
                 <input type="date" name="tanggal_selesai" id="cuti-selesai" class="form-control" required min="<?=date('Y-m-d')?>"></div>
             <div class="form-group form-full">
-                <div style="padding:9px 12px;background:var(--surface-3);border-radius:var(--r);font-size:13px;color:var(--green-400);font-weight:700" id="jumlah-hari">— pilih tanggal —</div>
+                <div style="padding:9px 12px;background:var(--surface-3);border-radius:var(--r);font-size:13px;color:var(--green-400);font-weight:700" id="jumlah-hari">&mdash; pilih tanggal &mdash;</div>
             </div>
             <div class="form-group form-full"><label class="form-label">Alasan *</label>
                 <textarea name="alasan" class="form-control" rows="3" required></textarea></div>

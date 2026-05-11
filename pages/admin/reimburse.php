@@ -4,7 +4,7 @@ require_once __DIR__.'/../../config/database.php';
 requireAdmin();
 $me = currentUser();
 
-// ── Approve / Reject ──────────────────────────────────────────
+// ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'])) {
     $rid     = (int)$_POST['rid'];
     $aksi    = $_POST['aksi'] === 'setujui' ? 'disetujui' : 'ditolak';
@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'])) {
     $r = db()->query("SELECT rb.*,u.nama FROM reimburse rb JOIN users u ON rb.user_id=u.id WHERE rb.id=$rid")->fetch_assoc();
     if ($r) {
         $uid2  = (int)$r['user_id'];
-        $label = $aksi === 'disetujui' ? 'disetujui ✓' : 'ditolak ✗';
+        $label = $aksi === 'disetujui' ? 'disetujui' : 'ditolak';
         $ket2  = esc($r['kategori']);
         $jml   = esc('Rp '.number_format((float)$r['jumlah'],0,',','.'));
         $link  = esc(BASE_URL.'/pages/karyawan/reimburse.php');
@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['aksi'])) {
     redirect(BASE_URL.'/pages/admin/reimburse.php');
 }
 
-// ── Filter & List ─────────────────────────────────────────────
+// ---
 $stF  = sanitize($_GET['status'] ?? '');
 $q    = sanitize($_GET['q']      ?? '');
 $page = max(1,(int)($_GET['page'] ?? 1));
@@ -101,7 +101,7 @@ include __DIR__.'/../../includes/header.php';
         <td><div class="name-cell">
             <div class="avatar av-sm" style="background:<?= avatarBg((int)$r['user_id']) ?>"><?= initials($r['nama']) ?></div>
             <div><div class="nc-name"><?= htmlspecialchars($r['nama']) ?></div>
-            <div class="nc-sub"><?= htmlspecialchars($r['dept_nama'] ?? '—') ?></div></div>
+            <div class="nc-sub"><?= htmlspecialchars($r['dept_nama'] ?? '&mdash;') ?></div></div>
         </div></td>
         <td class="text-sm"><?= formatTgl($r['tanggal']) ?></td>
         <td class="text-sm"><?= htmlspecialchars($r['kategori']) ?></td>
@@ -109,17 +109,17 @@ include __DIR__.'/../../includes/header.php';
         <td class="text-sm" style="max-width:180px"><?= htmlspecialchars($r['keterangan']) ?></td>
         <td>
             <?php if ($r['bukti']): ?>
-            <a href="<?= BASE_URL ?>/assets/uploads/reimburse/<?= htmlspecialchars($r['bukti']) ?>" target="_blank" class="btn btn-sm">📎</a>
-            <?php else: ?><span class="text-muted text-xs">—</span><?php endif; ?>
+            <a href="<?= BASE_URL ?>/assets/uploads/reimburse/<?= htmlspecialchars($r['bukti']) ?>" target="_blank" class="btn btn-sm" aria-label="Lihat bukti"><span class="ui-icon i-paperclip"></span></a>
+            <?php else: ?><span class="text-muted text-xs">&mdash;</span><?php endif; ?>
         </td>
         <td><span class="badge <?= $bs[$r['status']] ?? 'badge-gray' ?>"><?= ucfirst($r['status']) ?></span></td>
         <td>
             <?php if ($r['status'] === 'pending'): ?>
             <div class="flex gap-2">
                 <button class="btn btn-sm btn-primary"
-                    onclick="aksiReimb(<?= $r['id'] ?>,'setujui')">✓</button>
+                    onclick="aksiReimb(<?= $r['id'] ?>,'setujui')"><span class="ui-icon i-check"></span> Setujui</button>
                 <button class="btn btn-sm btn-danger"
-                    onclick="aksiReimb(<?= $r['id'] ?>,'tolak')">✕</button>
+                    onclick="aksiReimb(<?= $r['id'] ?>,'tolak')" aria-label="Tolak"><span class="ui-icon i-x"></span></button>
             </div>
             <?php else: ?>
             <span class="text-muted text-xs"><?= htmlspecialchars($r['catatan_approver'] ?? '') ?></span>
@@ -131,11 +131,11 @@ include __DIR__.'/../../includes/header.php';
 </table>
 </div>
 <div class="pagination">
-    <span>Hal <?= $page ?>/<?= $pages ?> · <?= $total ?> total</span>
+    <span>Hal <?= $page ?>/<?= $pages ?> &middot; <?= $total ?> total</span>
     <div class="page-btns">
-        <?php if($page>1):?><a href="?q=<?=urlencode($q)?>&status=<?=$stF?>&page=<?=$page-1?>" class="page-btn">‹</a><?php endif;?>
+        <?php if($page>1):?><a href="?q=<?=urlencode($q)?>&status=<?=$stF?>&page=<?=$page-1?>" class="page-btn">&lsaquo;</a><?php endif;?>
         <?php for($i=max(1,$page-2);$i<=min($pages,$page+2);$i++):?><a href="?q=<?=urlencode($q)?>&status=<?=$stF?>&page=<?=$i?>" class="page-btn <?=$i==$page?'active':''?>"><?=$i?></a><?php endfor;?>
-        <?php if($page<$pages):?><a href="?q=<?=urlencode($q)?>&status=<?=$stF?>&page=<?=$page+1?>" class="page-btn">›</a><?php endif;?>
+        <?php if($page<$pages):?><a href="?q=<?=urlencode($q)?>&status=<?=$stF?>&page=<?=$page+1?>" class="page-btn">&rsaquo;</a><?php endif;?>
     </div>
 </div>
 </div>
@@ -143,7 +143,7 @@ include __DIR__.'/../../includes/header.php';
 <!-- Modal Aksi Reimburse -->
 <div class="modal-overlay" id="mAksi">
 <div class="modal">
-    <div class="modal-header"><span class="modal-title" id="mAksi_title">Konfirmasi</span><button class="modal-close" onclick="closeModal('mAksi')">✕</button></div>
+    <div class="modal-header"><span class="modal-title" id="mAksi_title">Konfirmasi</span><button class="modal-close" onclick="closeModal('mAksi')" aria-label="Tutup"><span class="ui-icon i-x"></span></button></div>
     <form method="POST">
     <input type="hidden" name="rid"  id="mAksi_rid">
     <input type="hidden" name="aksi" id="mAksi_aksi">
@@ -166,7 +166,7 @@ function aksiReimb(rid, aksi) {
     document.getElementById('mAksi_rid').value  = rid;
     document.getElementById('mAksi_aksi').value = aksi;
     var isSetuju = aksi === 'setujui';
-    document.getElementById('mAksi_title').textContent = isSetuju ? '✓ Setujui Reimburse' : '✕ Tolak Reimburse';
+    document.getElementById('mAksi_title').textContent = isSetuju ? 'Setujui Reimburse' : 'Tolak Reimburse';
     document.getElementById('mAksi_btn').className = 'btn ' + (isSetuju ? 'btn-primary' : 'btn-danger');
     document.getElementById('mAksi_btn').textContent = isSetuju ? 'Setujui' : 'Tolak';
     openModal('mAksi');

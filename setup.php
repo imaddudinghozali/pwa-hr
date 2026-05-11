@@ -1,6 +1,6 @@
 <?php
 /**
- * SIMK PHA — Setup Password
+ * SIMK PHA &mdash; Setup Password
  * Jalankan SEKALI: http://localhost/pwa-hr/setup.php
  * Hapus file ini setelah selesai!
  */
@@ -36,11 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tableOK) {
             $nipEsc= esc($nip);
             $ok    = db()->query("UPDATE users SET password='$hEsc' WHERE nip='$nipEsc'");
             if ($ok && db()->affected_rows > 0) {
-                $msgs[] = "✅ $nip — password berhasil diset";
+                $msgs[] = "âœ… $nip &mdash; password berhasil diset";
             } elseif ($ok) {
-                $msgs[] = "⚠️  $nip — NIP tidak ditemukan di database";
+                $msgs[] = "Peringatanï¸  $nip &mdash; NIP tidak ditemukan di database";
             } else {
-                $errors[] = "❌ $nip — ".db()->error;
+                $errors[] = "âŒ $nip &mdash; ".db()->error;
             }
         }
         $done = empty($errors);
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tableOK) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Setup — SIMK PHA</title>
+<title>Setup &mdash; SIMK PHA</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#0a1a0a;color:#f0fdf4;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
@@ -73,7 +73,7 @@ code{background:rgba(34,197,94,.1);padding:1px 6px;border-radius:4px;font-family
 </head>
 <body>
 <div class="card">
-    <h1>⚙️ Setup SIMK PHA</h1>
+    <h1>âš™ï¸ Setup SIMK PHA</h1>
     <div class="sub">Inisialisasi password akun default</div>
 
     <?php if (!$tableOK): ?>
@@ -87,8 +87,8 @@ code{background:rgba(34,197,94,.1);padding:1px 6px;border-radius:4px;font-family
         <strong>Setup berhasil!</strong><br>
         <?= implode('<br>', array_map('htmlspecialchars', $msgs)) ?>
     </div>
-    <div class="warn">⚠️ <strong>Hapus file <code>setup.php</code> setelah login berhasil!</strong></div>
-    <a href="<?= BASE_URL ?>/login.php" class="btn-login">→ Buka Halaman Login</a>
+    <div class="warn">Peringatanï¸ <strong>Hapus file <code>setup.php</code> setelah login berhasil!</strong></div>
+    <a href="<?= BASE_URL ?>/login.php" class="btn-login">â†’ Buka Halaman Login</a>
 
     <?php else: ?>
     <?php if (!empty($errors)): ?>
@@ -106,9 +106,9 @@ code{background:rgba(34,197,94,.1);padding:1px 6px;border-radius:4px;font-family
     <form method="POST">
         <label>Password Admin & HRD (ADM001, HRD001)</label>
         <input type="text" name="pass_admin" value="Admin@123" required minlength="6">
-        <label>Password Karyawan (EMP001–EMP003)</label>
+        <label>Password Karyawan (EMP001â€“EMP003)</label>
         <input type="text" name="pass_emp" value="Admin@123" required minlength="6">
-        <button type="submit">🔐 Set Password Sekarang</button>
+        <button type="submit">ðŸ” Set Password Sekarang</button>
     </form>
     <?php endif; ?>
 </div>

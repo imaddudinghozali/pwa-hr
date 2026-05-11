@@ -1,5 +1,5 @@
 // ============================================================
-// SIMK PHA — Main JS
+// SIMK PHA - Main JS
 // ============================================================
 
 // ---- PWA Install ----
@@ -24,10 +24,13 @@ document.getElementById('btn-install-dismiss')?.addEventListener('click', () => 
 });
 
 // ---- Service Worker ----
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/pwa-hr/sw.js').then(reg => {
-        console.log('SW registered:', reg.scope);
-    }).catch(console.error);
+// BASE_URL diset oleh header.php sebagai window.BASE_URL
+if ('serviceWorker' in navigator && window.BASE_URL) {
+    var swUrl = window.BASE_URL.replace(/\/$/, '') + '/sw.js';
+    var swScope = window.BASE_URL.replace(/^https?:\/\/[^/]+/, '').replace(/\/$/, '') + '/';
+    navigator.serviceWorker.register(swUrl, { scope: swScope })
+        .then(reg => console.log('SW registered:', reg.scope))
+        .catch(err => console.warn('SW register failed:', err));
 }
 
 // ---- Clock ----
@@ -78,19 +81,19 @@ function updateLocationUI(lat, lng, akurasi) {
     if (el) {
         if (gpsValid) {
             el.className = 'location-status loc-valid';
-            el.innerHTML = `<span class="pulse-dot"></span> Lokasi valid — ${jarak}m dari kantor`;
+            el.innerHTML = `<span class="pulse-dot"></span> Lokasi valid - ${jarak}m dari kantor`;
         } else {
             el.className = 'location-status loc-invalid';
-            el.innerHTML = `<span class="pulse-dot"></span> Di luar area — ${jarak}m dari kantor (maks. ${ABSEN_RADIUS}m)`;
+            el.innerHTML = `<span class="pulse-dot"></span> Di luar area - ${jarak}m dari kantor (maks. ${ABSEN_RADIUS}m)`;
         }
     }
-    if (distEl) distEl.textContent = `${jarak}m | Akurasi ±${Math.round(akurasi)}m`;
+    if (distEl) distEl.textContent = `${jarak}m | Akurasi +/-${Math.round(akurasi)}m`;
 
     // Enable/disable absen button
     const btnMasuk   = document.getElementById('btn-absen-masuk');
     const btnKeluar  = document.getElementById('btn-absen-keluar');
-    if (btnMasuk)  { btnMasuk.disabled  = !gpsValid; btnMasuk.classList.toggle('absen-btn-disabled', !gpsValid); }
-    if (btnKeluar) { btnKeluar.disabled = !gpsValid; btnKeluar.classList.toggle('absen-btn-disabled', !gpsValid); }
+    if (btnMasuk)  { btnMasuk.classList.toggle('absen-btn-disabled', !gpsValid); btnMasuk.setAttribute('aria-disabled', String(!gpsValid)); }
+    if (btnKeluar) { btnKeluar.classList.toggle('absen-btn-disabled', !gpsValid); btnKeluar.setAttribute('aria-disabled', String(!gpsValid)); }
 }
 
 function initGPS() {
@@ -117,14 +120,24 @@ function initGPS() {
 if (document.getElementById('location-status')) initGPS();
 
 // ---- Sidebar Mobile ----
-document.getElementById('btn-sidebar-toggle')?.addEventListener('click', () => {
-    document.getElementById('sidebar').classList.toggle('open');
-    document.getElementById('sidebar-overlay').classList.toggle('open');
+function _toggleSidebar(open) {
+    var sb = document.getElementById('sidebar');
+    var ov = document.getElementById('sidebar-overlay');
+    if (!sb || !ov) return;
+    if (open === undefined) { sb.classList.toggle('open'); ov.classList.toggle('open'); }
+    else if (open) { sb.classList.add('open'); ov.classList.add('open'); }
+    else { sb.classList.remove('open'); ov.classList.remove('open'); }
+}
+document.getElementById('btn-sidebar-toggle')?.addEventListener('click', () => _toggleSidebar());
+document.getElementById('sidebar-overlay')?.addEventListener('click', () => _toggleSidebar(false));
+
+// Auto close sidebar saat klik nav-item di layar kecil
+document.querySelectorAll('.sidebar .nav-item').forEach(a => {
+    a.addEventListener('click', () => { if (window.innerWidth <= 768) _toggleSidebar(false); });
 });
-document.getElementById('sidebar-overlay')?.addEventListener('click', () => {
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('sidebar-overlay').classList.remove('open');
-});
+
+// Tutup dengan tombol Escape
+document.addEventListener('keydown', e => { if (e.key === 'Escape') _toggleSidebar(false); });
 
 // ---- Modal helpers ----
 window.openModal  = id => document.getElementById(id)?.classList.add('open');
@@ -142,27 +155,63 @@ window.confirmDel = (url, nama) => {
 // ---- Auto-submit filter selects ----
 document.querySelectorAll('.auto-submit').forEach(s => s.addEventListener('change', () => s.closest('form').submit()));
 
+// ---- Responsive tables ----
+document.querySelectorAll('.tbl-wrap table').forEach(table => {
+    const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+    if (!headers.length) return;
+    table.classList.add('responsive-card-table');
+    table.querySelectorAll('tbody tr').forEach(row => {
+        Array.from(row.children).forEach((cell, idx) => {
+            if (!cell.hasAttribute('data-label')) cell.setAttribute('data-label', headers[idx] || '');
+        });
+    });
+});
+
 // ---- Auto-hide alerts ----
 document.querySelectorAll('.alert').forEach(a => {
     setTimeout(() => { a.style.transition = 'opacity 0.5s'; a.style.opacity = '0'; }, 4000);
 });
 
 // ---- Absen form submission with foto ----
-function submitAbsen(tipe) {
+window.submitAbsen = function(tipe) {
+    if (tipe !== 'masuk' && tipe !== 'keluar') {
+        alert('Tipe absensi tidak valid.');
+        return;
+    }
+    if (gpsLat === null || gpsLng === null) {
+        alert('GPS belum siap. Pastikan izin lokasi diaktifkan, lalu coba lagi.');
+        return;
+    }
     if (!gpsValid && OFFICE_LAT) {
         alert('Anda berada di luar area kantor. Absensi tidak dapat dilakukan.');
         return;
     }
     const form = document.getElementById('form-absen');
     if (!form) return;
+    const fotoEl = document.getElementById('hidden-foto');
+    const fotoVal = fotoEl ? fotoEl.value : '';
+    if (!fotoVal) {
+        alert('Foto absensi wajib diambil dari kamera.');
+        return;
+    }
+    if (fotoVal.indexOf('data:image/jpeg;base64,') !== 0) {
+        alert('Format foto absensi tidak valid. Ambil ulang foto.');
+        return;
+    }
     document.getElementById('hidden-tipe').value = tipe;
     document.getElementById('hidden-lat').value  = gpsLat;
     document.getElementById('hidden-lng').value  = gpsLng;
+
+    // Cegah double-submit
+    var submitBtns = document.querySelectorAll('#btn-absen-masuk, #btn-absen-keluar, #btn-capture');
+    submitBtns.forEach(function(b){ b.disabled = true; });
+
     form.submit();
 }
 
 // ---- Salary calculator ----
 function hitungGaji() {
+    if (!document.querySelector('.legacy-salary-calc')) return;
     const pokok   = parseFloat(document.getElementById('calc-pokok')?.value   || 0);
     const tunj    = parseFloat(document.getElementById('calc-tunj')?.value    || 0);
     const lembur  = parseFloat(document.getElementById('calc-lembur')?.value  || 0);
@@ -177,7 +226,7 @@ function hitungGaji() {
     if (document.getElementById('calc-bpjs-kes')) document.getElementById('calc-bpjs-kes').textContent = fmt(bpjsKes);
     if (document.getElementById('calc-bersih'))   document.getElementById('calc-bersih').textContent   = fmt(bersih);
 }
-document.querySelectorAll('.calc-input').forEach(i => i.addEventListener('input', hitungGaji));
+document.querySelectorAll('.legacy-salary-calc .calc-input').forEach(i => i.addEventListener('input', hitungGaji));
 
 // ---- Cuti date range ----
 function hitungHariCuti() {

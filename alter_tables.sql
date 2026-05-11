@@ -70,6 +70,12 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 -- Buat folder: assets/uploads/absensi/ dan assets/uploads/reimburse/
 -- secara manual atau via PHP
 
+-- ── 4b. Kolom bonus pada slip_gaji (penggajian manual) ────────
+ALTER TABLE slip_gaji
+    ADD COLUMN IF NOT EXISTS bonus DECIMAL(15,2) DEFAULT 0 AFTER tunjangan_transport,
+    ADD COLUMN IF NOT EXISTS potongan_lain DECIMAL(15,2) DEFAULT 0 AFTER potongan_pph21,
+    ADD COLUMN IF NOT EXISTS catatan TEXT AFTER dibuat_oleh;
+
 -- ── 5. Grup default "HR General" ─────────────────────────────
 INSERT IGNORE INTO chat_rooms (id, nama, tipe, dibuat_oleh)
 SELECT 1, 'HR General', 'group', u.id FROM users u WHERE u.role='admin' LIMIT 1;

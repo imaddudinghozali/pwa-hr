@@ -3,14 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<meta name="theme-color" content="#16a34a">
+<meta name="theme-color" content="#0f172a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SIMK PHA">
 <link rel="manifest" href="<?= BASE_URL ?>/manifest.json">
 <link rel="apple-touch-icon" href="<?= BASE_URL ?>/assets/icons/icon-192.png">
 <link rel="icon" type="image/png" href="<?= BASE_URL ?>/assets/icons/icon-72.png">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app.css">
-<title><?= htmlspecialchars($pageTitle ?? 'Dashboard') ?> — SIMK PHA</title>
+<title><?= htmlspecialchars($pageTitle ?? 'Dashboard') ?> - SIMK PHA</title>
+<script>window.BASE_URL = <?= json_encode(BASE_URL) ?>;</script>
 </head>
 <body>
 <?php
@@ -19,7 +20,7 @@ $user = currentUser();
 if (!$user) { redirect(BASE_URL.'/login.php'); }
 $isAdmin = in_array($user['role'], ['admin','hrd'], true);
 
-// Sidebar badge counts (safe — won't crash if tables empty)
+// Sidebar badge counts
 $badgeLembur  = 0;
 $badgeCuti    = 0;
 $badgeNotif   = 0;
@@ -63,53 +64,53 @@ if ($isAdmin) {
         <div class="nav-section">
             <div class="nav-section-label">Utama</div>
             <a class="nav-item <?= ($activePage??'')==='dashboard'?'active':'' ?>" href="<?= BASE_URL ?>/pages/admin/dashboard.php">
-                <span class="nav-icon">▦</span> Dashboard
+                <span class="nav-icon"><span class="ui-icon i-home"></span></span> Dashboard
             </a>
             <a class="nav-item <?= ($activePage??'')==='karyawan'?'active':'' ?>" href="<?= BASE_URL ?>/pages/admin/karyawan.php">
-                <span class="nav-icon">▦</span> Karyawan
+                <span class="nav-icon"><span class="ui-icon i-users"></span></span> Karyawan
             </a>
         </div>
         <div class="nav-section">
             <div class="nav-section-label">Operasional</div>
             <a class="nav-item <?= ($activePage??'')==='absensi'?'active':'' ?>" href="<?= BASE_URL ?>/pages/admin/absensi.php">
-                <span class="nav-icon">◉</span> Rekap Absensi
+                <span class="nav-icon"><span class="ui-icon i-calendar"></span></span> Rekap Absensi
             </a>
             <a class="nav-item <?= ($activePage??'')==='lembur'?'active':'' ?>" href="<?= BASE_URL ?>/pages/admin/lembur.php">
-                <span class="nav-icon">◉</span> Lembur
+                <span class="nav-icon"><span class="ui-icon i-clock"></span></span> Lembur
                 <?php if ($badgeLembur > 0): ?><span class="badge"><?= $badgeLembur ?></span><?php endif; ?>
             </a>
             <a class="nav-item <?= ($activePage??'')==='cuti'?'active':'' ?>" href="<?= BASE_URL ?>/pages/admin/cuti.php">
-                <span class="nav-icon">◉</span> Pengajuan Cuti
+                <span class="nav-icon"><span class="ui-icon i-file-text"></span></span> Pengajuan Cuti
                 <?php if ($badgeCuti > 0): ?><span class="badge"><?= $badgeCuti ?></span><?php endif; ?>
             </a>
             <a class="nav-item <?= ($activePage??'')==='reimburse'?'active':'' ?>" href="<?= BASE_URL ?>/pages/admin/reimburse.php">
-                <span class="nav-icon">◉</span> Reimburse
+                <span class="nav-icon"><span class="ui-icon i-wallet"></span></span> Reimburse
                 <?php if ($badgeReimb > 0): ?><span class="badge"><?= $badgeReimb ?></span><?php endif; ?>
             </a>
         </div>
         <div class="nav-section">
             <div class="nav-section-label">Penggajian</div>
             <a class="nav-item <?= ($activePage??'')==='penggajian'?'active':'' ?>" href="<?= BASE_URL ?>/pages/admin/penggajian.php">
-                <span class="nav-icon">◉</span> Slip Gaji
+                <span class="nav-icon"><span class="ui-icon i-wallet"></span></span> Slip Gaji
             </a>
         </div>
         <div class="nav-section">
             <div class="nav-section-label">Komunikasi</div>
             <a class="nav-item <?= ($activePage??'')==='chat'?'active':'' ?>" href="<?= BASE_URL ?>/pages/admin/chat.php">
-                <span class="nav-icon">◉</span> Chat
+                <span class="nav-icon"><span class="ui-icon i-message"></span></span> Chat
                 <?php if ($badgeChat > 0): ?><span class="badge"><?= $badgeChat ?></span><?php endif; ?>
             </a>
         </div>
         <div class="nav-section">
             <div class="nav-section-label">Master Data</div>
             <a class="nav-item <?= ($activePage??'')==='departemen'?'active':'' ?>" href="<?= BASE_URL ?>/pages/admin/departemen.php">
-                <span class="nav-icon">◉</span> Departemen
+                <span class="nav-icon"><span class="ui-icon i-building"></span></span> Departemen
             </a>
             <a class="nav-item <?= ($activePage??'')==='shift'?'active':'' ?>" href="<?= BASE_URL ?>/pages/admin/shift.php">
-                <span class="nav-icon">◉</span> Shift Kerja
+                <span class="nav-icon"><span class="ui-icon i-clock"></span></span> Shift Kerja
             </a>
             <a class="nav-item <?= ($activePage??'')==='export'?'active':'' ?>" href="<?= BASE_URL ?>/pages/admin/export_karyawan.php">
-                <span class="nav-icon">◉</span> Export Data
+                <span class="nav-icon"><span class="ui-icon i-download"></span></span> Export Data
                 <?php if ($badgeKontrak > 0): ?><span class="badge badge-amber" style="background:var(--amb-bg);color:#fcd34d"><?= $badgeKontrak ?></span><?php endif; ?>
             </a>
         </div>
@@ -117,29 +118,29 @@ if ($isAdmin) {
         <div class="nav-section">
             <div class="nav-section-label">Menu Saya</div>
             <a class="nav-item <?= ($activePage??'')==='beranda'?'active':'' ?>" href="<?= BASE_URL ?>/pages/karyawan/dashboard.php">
-                <span class="nav-icon">◉</span> Beranda
+                <span class="nav-icon"><span class="ui-icon i-home"></span></span> Beranda
             </a>
             <a class="nav-item <?= ($activePage??'')==='absensi'?'active':'' ?>" href="<?= BASE_URL ?>/pages/karyawan/absensi.php">
-                <span class="nav-icon">◉</span> Absensi Kamera
+                <span class="nav-icon"><span class="ui-icon i-camera"></span></span> Absensi Kamera
             </a>
             <a class="nav-item <?= ($activePage??'')==='lembur'?'active':'' ?>" href="<?= BASE_URL ?>/pages/karyawan/lembur.php">
-                <span class="nav-icon">◉</span> Lembur
+                <span class="nav-icon"><span class="ui-icon i-clock"></span></span> Lembur
             </a>
             <a class="nav-item <?= ($activePage??'')==='cuti'?'active':'' ?>" href="<?= BASE_URL ?>/pages/karyawan/cuti.php">
-                <span class="nav-icon">◉</span> Pengajuan Cuti
+                <span class="nav-icon"><span class="ui-icon i-file-text"></span></span> Pengajuan Cuti
             </a>
             <a class="nav-item <?= ($activePage??'')==='reimburse'?'active':'' ?>" href="<?= BASE_URL ?>/pages/karyawan/reimburse.php">
-                <span class="nav-icon">◉</span> Reimburse
+                <span class="nav-icon"><span class="ui-icon i-wallet"></span></span> Reimburse
             </a>
             <a class="nav-item <?= ($activePage??'')==='chat'?'active':'' ?>" href="<?= BASE_URL ?>/pages/karyawan/chat.php">
-                <span class="nav-icon">◉</span> Chat HR
+                <span class="nav-icon"><span class="ui-icon i-message"></span></span> Chat HR
                 <?php if ($badgeChat > 0): ?><span class="badge"><?= $badgeChat ?></span><?php endif; ?>
             </a>
             <a class="nav-item <?= ($activePage??'')==='gaji'?'active':'' ?>" href="<?= BASE_URL ?>/pages/karyawan/slip_gaji.php">
-                <span class="nav-icon">◉</span> Slip Gaji
+                <span class="nav-icon"><span class="ui-icon i-wallet"></span></span> Slip Gaji
             </a>
             <a class="nav-item <?= ($activePage??'')==='profil'?'active':'' ?>" href="<?= BASE_URL ?>/pages/karyawan/profil.php">
-                <span class="nav-icon">◉</span> Profil Saya
+                <span class="nav-icon"><span class="ui-icon i-users"></span></span> Profil Saya
             </a>
         </div>
     <?php endif; ?>
@@ -154,17 +155,17 @@ if ($isAdmin) {
                 <div class="name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
                     <?= htmlspecialchars($user['nama']) ?>
                 </div>
-                <div class="role"><?= strtoupper($user['role']) ?> · <?= htmlspecialchars($user['nip']) ?></div>
+                <div class="role"><?= strtoupper($user['role']) ?> &middot; <?= htmlspecialchars($user['nip']) ?></div>
             </div>
-            <a href="<?= BASE_URL ?>/logout.php" title="Logout"
-               style="color:var(--text-m);font-size:18px;padding:4px;flex-shrink:0;text-decoration:none">⏻</a>
+            <a href="<?= BASE_URL ?>/logout.php" title="Logout" class="icon-btn"
+               style="padding:8px;flex-shrink:0;text-decoration:none"><span class="ui-icon i-log-out"></span></a>
         </div>
     </div>
 </aside>
 
 <div class="main-wrap">
     <header class="topbar">
-        <button class="topbar-menu-btn" id="btn-sidebar-toggle">☰</button>
+        <button class="topbar-menu-btn" id="btn-sidebar-toggle" aria-label="Buka menu"><span class="ui-icon i-menu"></span></button>
         <div style="flex:1;min-width:0">
             <div class="topbar-title"><?= htmlspecialchars($pageTitle ?? 'Dashboard') ?></div>
             <?php if (!empty($pageSub)): ?>
@@ -174,7 +175,7 @@ if ($isAdmin) {
         <div class="topbar-right">
             <?= $topbarActions ?? '' ?>
             <a href="<?= BASE_URL ?>/pages/karyawan/notifikasi.php" class="notif-btn" title="Notifikasi">
-                🔔<?php if ($badgeNotif > 0): ?><span class="notif-dot"></span><?php endif; ?>
+                <span class="ui-icon i-bell"></span><?php if ($badgeNotif > 0): ?><span class="notif-dot"></span><?php endif; ?>
             </a>
         </div>
     </header>

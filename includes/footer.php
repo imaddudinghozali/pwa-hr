@@ -9,7 +9,7 @@
         <div style="font-size:12px;color:var(--text-2)">Akses lebih cepat sebagai aplikasi</div>
     </div>
     <button class="btn btn-primary btn-sm" id="btn-install">Install</button>
-    <button class="btn btn-sm" id="btn-install-dismiss" style="padding:6px 8px">✕</button>
+    <button class="btn btn-sm" id="btn-install-dismiss" style="padding:6px 8px" aria-label="Tutup"><span class="ui-icon i-x"></span></button>
 </div>
 
 <script src="<?= BASE_URL ?>/assets/js/app.js"></script>

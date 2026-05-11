@@ -10,7 +10,7 @@ $uid = (int)$user['id'];
 $uploadDir = __DIR__.'/../../assets/uploads/reimburse/';
 if (!is_dir($uploadDir)) @mkdir($uploadDir, 0755, true);
 
-// ── POST: Submit reimburse ────────────────────────────────────
+// ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_reimb'])) {
     $tanggal    = sanitize($_POST['tanggal']    ?? '');
     $kategori   = sanitize($_POST['kategori']   ?? '');
@@ -47,14 +47,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_reimb'])) {
             $hid = (int)$h['id'];
             $n   = esc($user['nama']);
             db()->query("INSERT INTO notifikasi (user_id,judul,pesan,tipe,link)
-                VALUES ($hid,'Reimburse Baru','$n mengajukan reimburse ".esc($kategori)." — ".esc('Rp '.number_format($jumlah,0,',','.'))."','info','".esc(BASE_URL.'/pages/admin/reimburse.php')."')");
+                VALUES ($hid,'Reimburse Baru','$n mengajukan reimburse ".esc($kategori)." &mdash; ".esc('Rp '.number_format($jumlah,0,',','.'))."','info','".esc(BASE_URL.'/pages/admin/reimburse.php')."')");
         }
         flash('success', 'Pengajuan reimburse berhasil dikirim.');
     }
     redirect(BASE_URL.'/pages/karyawan/reimburse.php');
 }
 
-// ── Data ─────────────────────────────────────────────────────
+// ---
 $list = db()->query("SELECT * FROM reimburse WHERE user_id=$uid ORDER BY created_at DESC LIMIT 50");
 $totDisetujui = (float)db()->query("SELECT COALESCE(SUM(jumlah),0) t FROM reimburse WHERE user_id=$uid AND status='disetujui'")->fetch_assoc()['t'];
 
@@ -93,11 +93,11 @@ include __DIR__.'/../../includes/header.php';
         <td>
             <?php if ($r['bukti']): ?>
             <a href="<?= BASE_URL ?>/assets/uploads/reimburse/<?= htmlspecialchars($r['bukti']) ?>" target="_blank"
-               class="btn btn-sm">📎 Lihat</a>
-            <?php else: ?><span class="text-muted text-xs">—</span><?php endif; ?>
+               class="btn btn-sm icon-label"><span class="ui-icon i-paperclip"></span> Lihat</a>
+            <?php else: ?><span class="text-muted text-xs">&mdash;</span><?php endif; ?>
         </td>
         <td><span class="badge <?= $bs[$r['status']] ?? 'badge-gray' ?>"><?= ucfirst($r['status']) ?></span></td>
-        <td class="text-sm text-muted" style="max-width:160px"><?= htmlspecialchars($r['catatan_approver'] ?? '—') ?></td>
+        <td class="text-sm text-muted" style="max-width:160px"><?= htmlspecialchars($r['catatan_approver'] ?? '&mdash;') ?></td>
     </tr>
     <?php endwhile; endif; ?>
     </tbody>
@@ -108,7 +108,7 @@ include __DIR__.'/../../includes/header.php';
 <!-- Modal Ajukan Reimburse -->
 <div class="modal-overlay" id="mReim">
 <div class="modal">
-    <div class="modal-header"><span class="modal-title">Ajukan Reimburse</span><button class="modal-close" onclick="closeModal('mReim')">✕</button></div>
+    <div class="modal-header"><span class="modal-title">Ajukan Reimburse</span><button class="modal-close" onclick="closeModal('mReim')" aria-label="Tutup"><span class="ui-icon i-x"></span></button></div>
     <form method="POST" enctype="multipart/form-data">
     <input type="hidden" name="submit_reimb" value="1">
     <div class="modal-body">
@@ -120,7 +120,7 @@ include __DIR__.'/../../includes/header.php';
             <div class="form-group">
                 <label class="form-label">Kategori *</label>
                 <select name="kategori" class="form-control" required>
-                    <option value="">— Pilih —</option>
+                    <option value="">&mdash; Pilih &mdash;</option>
                     <option value="Transportasi">Transportasi</option>
                     <option value="Makan & Minum">Makan & Minum</option>
                     <option value="Akomodasi">Akomodasi</option>

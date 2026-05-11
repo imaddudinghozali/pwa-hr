@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profil'])) {
     $bank  = sanitize($_POST['nama_bank']  ?? '');
     $telp_e=esc($telp); $alamat_e=esc($alamat); $noRek_e=esc($noRek); $bank_e=esc($bank);
     db()->query("UPDATE users SET telepon='$telp_e',alamat='$alamat_e',no_rekening='$noRek_e',nama_bank='$bank_e' WHERE id=$uid");
-    clearUserCache(); // ← wajib setelah update agar currentUser() reload data
+    clearUserCache(); // <- wajib setelah update agar currentUser() reload data
     flash('success','Profil berhasil diperbarui.');
     redirect(BASE_URL.'/pages/karyawan/profil.php');
 }
@@ -64,7 +64,7 @@ include __DIR__.'/../../includes/header.php';
                     <span class="badge badge-blue">Cuti: <?=(int)$user['sisa_cuti']?> hari</span>
                 </div>
                 <table style="width:100%;text-align:left;font-size:13px">
-                    <?php $rows=[['Email',$user['email']??'—'],['Departemen',$user['dept_nama']??'—'],['Jabatan',$user['jabatan_nama']??'—'],['Shift',$user['shift_nama']??'—'],['Bergabung',formatTgl($user['tanggal_bergabung']??'')],['Kelamin',$user['jenis_kelamin']==='L'?'Laki-laki':'Perempuan'],['Lahir',formatTgl($user['tanggal_lahir']??'')]];
+                    <?php $rows=[['Email',$user['email']??'&mdash;'],['Departemen',$user['dept_nama']??'&mdash;'],['Jabatan',$user['jabatan_nama']??'&mdash;'],['Shift',$user['shift_nama']??'&mdash;'],['Bergabung',formatTgl($user['tanggal_bergabung']??'')],['Kelamin',$user['jenis_kelamin']==='L'?'Laki-laki':'Perempuan'],['Lahir',formatTgl($user['tanggal_lahir']??'')]];
                     foreach ($rows as [$k,$v]): ?>
                     <tr><td style="color:var(--text-m);padding:5px 0;font-size:12px"><?=$k?></td><td style="padding:5px 0"><?=htmlspecialchars($v)?></td></tr>
                     <?php endforeach; ?>

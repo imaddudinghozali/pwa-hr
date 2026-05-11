@@ -3,7 +3,7 @@ session_start();
 require_once __DIR__.'/../../config/database.php';
 requireAdmin();
 
-// ── Jika request download, output CSV / Excel ────────────────
+// ---
 if (isset($_GET['download'])) {
     $fmt    = sanitize($_GET['fmt'] ?? 'csv');
     $deptF  = (int)($_GET['dept']   ?? 0);
@@ -87,7 +87,7 @@ if (isset($_GET['download'])) {
     }
 }
 
-// ── Halaman preview ───────────────────────────────────────────
+// ---
 $deptF  = (int)($_GET['dept']   ?? 0);
 $jenisF = sanitize($_GET['jenis'] ?? '');
 $stF    = sanitize($_GET['status'] ?? '');
@@ -115,8 +115,8 @@ $pageTitle  = 'Export Data Karyawan';
 $activePage = 'export';
 $baseQuery  = http_build_query(['dept'=>$deptF,'jenis'=>$jenisF,'status'=>$stF,'download'=>1]);
 $topbarActions = '
-<a href="?'.$baseQuery.'&fmt=xls" class="btn btn-primary">⬇ Export Excel (.xls)</a>
-<a href="?'.$baseQuery.'&fmt=csv" class="btn btn-sm">⬇ Export CSV</a>';
+<a href="?'.$baseQuery.'&fmt=xls" class="btn btn-primary">Download Export Excel (.xls)</a>
+<a href="?'.$baseQuery.'&fmt=csv" class="btn btn-sm">Download Export CSV</a>';
 include __DIR__.'/../../includes/header.php';
 ?>
 
@@ -172,16 +172,16 @@ include __DIR__.'/../../includes/header.php';
     <tr>
         <td class="mono text-sm"><?= htmlspecialchars($r['nip']) ?></td>
         <td><div class="nc-name"><?= htmlspecialchars($r['nama']) ?></div></td>
-        <td class="text-sm"><?= htmlspecialchars($r['dept_nama'] ?? '—') ?></td>
-        <td class="text-sm"><?= htmlspecialchars($r['jabatan_nama'] ?? '—') ?></td>
+        <td class="text-sm"><?= htmlspecialchars($r['dept_nama'] ?? '&mdash;') ?></td>
+        <td class="text-sm"><?= htmlspecialchars($r['jabatan_nama'] ?? '&mdash;') ?></td>
         <td><span class="badge <?= $bjk[$r['jenis_karyawan']??'tetap']??'badge-gray' ?>"><?= ucfirst($r['jenis_karyawan']??'tetap') ?></span></td>
         <td><span class="badge <?= $bst[$r['status']]??'badge-gray' ?>"><?= ucfirst($r['status']) ?></span></td>
         <td class="text-sm"><?= formatTgl($r['tanggal_bergabung'] ?? '') ?></td>
         <td class="text-sm">
-            <?= !empty($r['tanggal_kontrak_selesai']) ? formatTgl($r['tanggal_kontrak_selesai']) : '—' ?>
+            <?= !empty($r['tanggal_kontrak_selesai']) ? formatTgl($r['tanggal_kontrak_selesai']) : '&mdash;' ?>
         </td>
         <td class="mono text-sm text-green"><?= formatRp((float)($r['gaji_eff']??0)) ?></td>
-        <td class="text-sm text-muted"><?= htmlspecialchars($r['email'] ?? '—') ?></td>
+        <td class="text-sm text-muted"><?= htmlspecialchars($r['email'] ?? '&mdash;') ?></td>
     </tr>
     <?php endwhile; endif; ?>
     </tbody>
@@ -189,7 +189,7 @@ include __DIR__.'/../../includes/header.php';
 </div>
 <?php if ($total > 200): ?>
 <div style="padding:10px 14px;font-size:12px;color:var(--amber);border-top:1px solid var(--border)">
-    ⚠ Preview dibatasi 200 baris. File export akan berisi semua <?= $total ?> data.
+    Peringatan Preview dibatasi 200 baris. File export akan berisi semua <?= $total ?> data.
 </div>
 <?php endif; ?>
 </div>

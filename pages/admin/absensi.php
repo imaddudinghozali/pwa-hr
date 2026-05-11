@@ -84,10 +84,10 @@ include __DIR__.'/../../includes/header.php';
             <div class="nc-sub"><?=htmlspecialchars($r['nip'])?></div></div>
         </div></td>
         <td class="text-sm"><?=formatTgl($r['tanggal'])?></td>
-        <td><span class="badge badge-purple text-xs"><?=htmlspecialchars($r['shift_nama']??'—')?></span></td>
-        <td class="mono text-sm"><?=$r['jam_masuk'] ? date('H:i',strtotime($r['jam_masuk'])) : '—'?></td>
-        <td class="mono text-sm"><?=$r['jam_keluar']? date('H:i',strtotime($r['jam_keluar'])): '—'?></td>
-        <td class="text-sm text-muted"><?=$r['jarak_masuk'] ? $r['jarak_masuk'].'m' : '—'?></td>
+        <td><span class="badge badge-purple text-xs"><?=htmlspecialchars($r['shift_nama']??'&mdash;')?></span></td>
+        <td class="mono text-sm"><?=$r['jam_masuk'] ? date('H:i',strtotime($r['jam_masuk'])) : '&mdash;'?></td>
+        <td class="mono text-sm"><?=$r['jam_keluar']? date('H:i',strtotime($r['jam_keluar'])): '&mdash;'?></td>
+        <td class="text-sm text-muted"><?=$r['jarak_masuk'] ? $r['jarak_masuk'].'m' : '&mdash;'?></td>
         <td><span class="badge <?=$bc?>"><?=$lbl?></span></td>
     </tr>
     <?php endwhile; endif;?>
@@ -97,9 +97,9 @@ include __DIR__.'/../../includes/header.php';
 <div class="pagination">
     <span><?=$total?> record</span>
     <div class="page-btns">
-        <?php if($page>1):?><a href="?bulan=<?=$bulan?>&tahun=<?=$tahun?>&dept=<?=$deptF?>&status=<?=$stF?>&page=<?=$page-1?>" class="page-btn">‹</a><?php endif;?>
+        <?php if($page>1):?><a href="?bulan=<?=$bulan?>&tahun=<?=$tahun?>&dept=<?=$deptF?>&status=<?=$stF?>&page=<?=$page-1?>" class="page-btn">&lsaquo;</a><?php endif;?>
         <?php for($i=max(1,$page-2);$i<=min($pages,$page+2);$i++):?><a href="?bulan=<?=$bulan?>&tahun=<?=$tahun?>&dept=<?=$deptF?>&status=<?=$stF?>&page=<?=$i?>" class="page-btn <?=$i==$page?'active':''?>"><?=$i?></a><?php endfor;?>
-        <?php if($page<$pages):?><a href="?bulan=<?=$bulan?>&tahun=<?=$tahun?>&dept=<?=$deptF?>&status=<?=$stF?>&page=<?=$page+1?>" class="page-btn">›</a><?php endif;?>
+        <?php if($page<$pages):?><a href="?bulan=<?=$bulan?>&tahun=<?=$tahun?>&dept=<?=$deptF?>&status=<?=$stF?>&page=<?=$page+1?>" class="page-btn">&rsaquo;</a><?php endif;?>
     </div>
 </div>
 </div>

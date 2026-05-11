@@ -170,6 +170,7 @@ CREATE TABLE slip_gaji (
     tunjangan_jabatan DECIMAL(15,2) DEFAULT 0,
     tunjangan_makan DECIMAL(15,2) DEFAULT 0,
     tunjangan_transport DECIMAL(15,2) DEFAULT 0,
+    bonus DECIMAL(15,2) DEFAULT 0,
     upah_lembur DECIMAL(15,2) DEFAULT 0,
     potongan_absen DECIMAL(15,2) DEFAULT 0,
     potongan_bpjs_tk DECIMAL(15,2) DEFAULT 0,

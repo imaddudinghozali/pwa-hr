@@ -51,7 +51,7 @@ include __DIR__.'/../../includes/header.php';
         <td><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:18px;height:18px;background:<?=htmlspecialchars($r['warna'])?>;border-radius:4px;display:inline-block"></span><span class="mono text-xs"><?=htmlspecialchars($r['warna'])?></span></span></td>
         <td><div class="flex gap-2">
             <button class="btn btn-sm" onclick='editShift(<?=json_encode($r,JSON_HEX_TAG|JSON_HEX_QUOT|JSON_HEX_AMP)?>)'>Edit</button>
-            <button class="btn btn-sm btn-danger" onclick="confirmDel('<?=BASE_URL?>/pages/admin/shift.php?hapus=<?=$r['id']?>','<?=htmlspecialchars($r['nama'],ENT_QUOTES)?>')">✕</button>
+            <button class="btn btn-sm btn-danger" onclick="confirmDel('<?=BASE_URL?>/pages/admin/shift.php?hapus=<?=$r['id']?>','<?=htmlspecialchars($r['nama'],ENT_QUOTES)?>')" aria-label="Hapus shift"><span class="ui-icon i-x"></span></button>
         </div></td>
     </tr>
     <?php endwhile; ?>
@@ -61,7 +61,7 @@ include __DIR__.'/../../includes/header.php';
 </div>
 <div class="modal-overlay" id="mShift">
 <div class="modal">
-    <div class="modal-header"><span class="modal-title" id="mShiftTitle">Tambah Shift</span><button class="modal-close" onclick="closeModal('mShift')">✕</button></div>
+    <div class="modal-header"><span class="modal-title" id="mShiftTitle">Tambah Shift</span><button class="modal-close" onclick="closeModal('mShift')" aria-label="Tutup"><span class="ui-icon i-x"></span></button></div>
     <form method="POST"><input type="hidden" name="id" id="sId" value="0">
     <div class="modal-body"><div class="form-grid">
         <div class="form-group form-full"><label class="form-label">Nama Shift *</label><input type="text" name="nama" id="sNama" class="form-control" required></div>

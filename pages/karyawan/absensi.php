@@ -11,14 +11,20 @@ $hari = date('Y-m-d');
 // Pastikan folder upload ada
 $uploadDir = __DIR__.'/../../assets/uploads/absensi/';
 if (!is_dir($uploadDir)) @mkdir($uploadDir, 0755, true);
+$maxFotoBytes = 2 * 1024 * 1024; // 2 MB decoded JPEG limit
 
-// ── POST: absen masuk / keluar ────────────────────────────────
+// ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tipe   = sanitize($_POST['tipe']    ?? '');
     $lat    = (float)($_POST['lat']      ?? 0);
     $lng    = (float)($_POST['lng']      ?? 0);
     $device = sanitize(substr($_POST['device'] ?? '', 0, 200));
     $foto64 = $_POST['foto_base64'] ?? '';
+
+    if (!in_array($tipe, ['masuk', 'keluar'], true)) {
+        flash('error', 'Tipe absensi tidak valid.');
+        redirect(BASE_URL.'/pages/karyawan/absensi.php');
+    }
 
     if (!$lat || !$lng) {
         flash('error', 'Koordinat GPS tidak valid. Aktifkan GPS dan coba lagi.');
@@ -35,12 +41,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(BASE_URL.'/pages/karyawan/absensi.php');
     }
 
-    // Simpan foto selfie
+    // Foto selfie wajib ada dan harus valid.
     $namaFoto = '';
-    if ($foto64 && strpos($foto64, 'data:image/jpeg;base64,') === 0) {
-        $imageData = base64_decode(str_replace('data:image/jpeg;base64,', '', $foto64));
-        $namaFoto  = 'absen_'.$uid.'_'.date('Ymd_His').'_'.$tipe.'.jpg';
-        @file_put_contents($uploadDir.$namaFoto, $imageData);
+    if ($foto64 === '') {
+        flash('error', 'Foto absensi wajib diambil dari kamera.');
+        redirect(BASE_URL.'/pages/karyawan/absensi.php');
+    }
+
+    if (strpos($foto64, 'data:image/jpeg;base64,') !== 0) {
+        flash('error', 'Format foto absensi tidak valid.');
+        redirect(BASE_URL.'/pages/karyawan/absensi.php');
+    }
+
+    $rawBase64 = substr($foto64, strlen('data:image/jpeg;base64,'));
+    if ($rawBase64 === '' || strlen($rawBase64) > (int)ceil($maxFotoBytes * 1.37)) {
+        flash('error', 'Ukuran foto absensi terlalu besar. Ambil ulang foto.');
+        redirect(BASE_URL.'/pages/karyawan/absensi.php');
+    }
+
+    $imageData = base64_decode($rawBase64, true);
+    if ($imageData === false || strlen($imageData) > $maxFotoBytes) {
+        flash('error', 'Data foto absensi tidak valid.');
+        redirect(BASE_URL.'/pages/karyawan/absensi.php');
+    }
+
+    $info = @getimagesizefromstring($imageData);
+    if (!$info || ($info['mime'] ?? '') !== 'image/jpeg') {
+        flash('error', 'Foto absensi harus berupa gambar JPEG valid.');
+        redirect(BASE_URL.'/pages/karyawan/absensi.php');
+    }
+
+    if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
+        flash('error', 'Folder upload absensi tidak dapat ditulis.');
+        redirect(BASE_URL.'/pages/karyawan/absensi.php');
+    }
+
+    $namaFoto  = 'absen_'.$uid.'_'.date('Ymd_His').'_'.$tipe.'.jpg';
+    if (file_put_contents($uploadDir.$namaFoto, $imageData, LOCK_EX) === false) {
+        flash('error', 'Gagal menyimpan foto absensi.');
+        redirect(BASE_URL.'/pages/karyawan/absensi.php');
     }
 
     $now      = date('Y-m-d H:i:s');
@@ -72,8 +111,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (db()->error) flash('error', 'Gagal menyimpan absensi: '.db()->error);
         else {
             $msg = $statusMasuk === 'terlambat'
-                ? "Absen masuk — TERLAMBAT (jarak: {$jarak}m)"
-                : "Absen masuk berhasil — Tepat waktu (jarak: {$jarak}m)";
+                ? "Absen masuk &mdash; TERLAMBAT (jarak: {$jarak}m)"
+                : "Absen masuk berhasil &mdash; Tepat waktu (jarak: {$jarak}m)";
             flash($statusMasuk === 'terlambat' ? 'amber' : 'success', $msg);
         }
 
@@ -92,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect(BASE_URL.'/pages/karyawan/absensi.php');
 }
 
-// ── Data ─────────────────────────────────────────────────────
+// ---
 $absenHari = db()->query("SELECT * FROM absensi WHERE user_id=$uid AND tanggal='$hari' LIMIT 1")->fetch_assoc();
 $bulan     = (int)($_GET['bulan'] ?? date('m'));
 $tahun     = (int)($_GET['tahun'] ?? date('Y'));
@@ -114,7 +153,12 @@ include __DIR__.'/../../includes/header.php';
 <input type="hidden" id="office-lng"   value="<?= $offLng ?>">
 <input type="hidden" id="absen-radius" value="<?= $radius ?>">
 
-<div class="grid-2 mb-2" style="grid-template-columns:1fr 1.5fr">
+<style>
+.absen-grid { grid-template-columns: 1fr 1.5fr; }
+@media (max-width: 900px) { .absen-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="grid-2 mb-2 absen-grid">
 
     <!-- Panel Absen -->
     <div class="absen-card">
@@ -131,13 +175,14 @@ include __DIR__.'/../../includes/header.php';
             <video id="cam-video" autoplay playsinline muted
                 style="width:100%;max-width:260px;border-radius:var(--rl);border:2px solid var(--border-md);background:#000"></video>
             <canvas id="cam-canvas" style="display:none"></canvas>
+            <div id="cam-status" class="text-xs text-muted mt-1" style="text-align:center"></div>
             <div id="cam-preview-wrap" style="display:none;margin-top:8px">
                 <img id="cam-preview" style="width:100%;max-width:260px;border-radius:var(--rl);border:2px solid var(--green-600)">
-                <div class="text-xs text-muted mt-1" style="text-align:center">Foto selfie tersimpan ✓</div>
+                <div class="text-xs text-muted mt-1 icon-label" style="justify-content:center"><span class="ui-icon i-check"></span> Foto selfie tersimpan</div>
             </div>
             <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
-                <button class="btn btn-sm btn-primary" id="btn-capture" onclick="capturePhoto()">📷 Ambil Foto</button>
-                <button class="btn btn-sm" id="btn-retake" onclick="retakePhoto()" style="display:none">↺ Ulang</button>
+                <button class="btn btn-sm btn-primary icon-label" id="btn-capture" onclick="capturePhoto()"><span class="ui-icon i-camera"></span> Ambil Foto</button>
+                <button class="btn btn-sm icon-label" id="btn-retake" onclick="retakePhoto()" style="display:none"><span class="ui-icon i-rotate"></span> Ulang</button>
             </div>
         </div>
 
@@ -157,10 +202,10 @@ include __DIR__.'/../../includes/header.php';
 
         <?php if (!$sudahMasuk): ?>
         <button id="btn-absen-masuk" class="absen-btn-masuk absen-btn-disabled" onclick="bukakamera('masuk')">
-            <div class="btn-icon-big">📷</div>
+            <div class="btn-icon-big"><span class="ui-icon i-camera"></span></div>
             <div style="font-weight:700">ABSEN MASUK</div>
             <div class="text-xs" style="margin-top:4px;opacity:.7">
-                <?= htmlspecialchars($user['shift_nama'] ?? '—') ?><br>
+                <?= htmlspecialchars($user['shift_nama'] ?? '&mdash;') ?><br>
                 <?= $user['jam_masuk'] ? substr($user['jam_masuk'],0,5) : '' ?>
             </div>
         </button>
@@ -172,7 +217,7 @@ include __DIR__.'/../../includes/header.php';
             <?php endif; ?>
             <div class="mt-1">
             <span class="badge badge-green" style="font-size:13px;padding:8px 16px">
-                ✓ Masuk: <?= date('H:i', strtotime($absenHari['jam_masuk'])) ?>
+                <span class="ui-icon i-check"></span> Masuk: <?= date('H:i', strtotime($absenHari['jam_masuk'])) ?>
                 <?php if ($absenHari['status_masuk'] === 'terlambat'): ?>
                 <span class="badge badge-amber" style="margin-left:6px">Terlambat</span>
                 <?php endif; ?>
@@ -180,7 +225,7 @@ include __DIR__.'/../../includes/header.php';
             </div>
         </div>
         <button id="btn-absen-keluar" class="absen-btn-keluar absen-btn-disabled" onclick="bukakamera('keluar')">
-            <div class="btn-icon-big">📷</div>
+            <div class="btn-icon-big"><span class="ui-icon i-camera"></span></div>
             <div style="font-weight:700">ABSEN KELUAR</div>
         </button>
         <?php else: ?>
@@ -201,7 +246,7 @@ include __DIR__.'/../../includes/header.php';
                 </div>
                 <?php endif; ?>
             </div>
-            <div style="font-size:24px;margin-bottom:8px">✅</div>
+            <div style="font-size:24px;margin-bottom:8px;color:var(--green-400)"><span class="ui-icon i-check"></span></div>
             <div style="font-weight:700;color:var(--green-400);margin-bottom:8px">Absensi Selesai</div>
             <div class="text-sm text-muted">
                 Masuk:  <strong class="text-green  mono"><?= date('H:i', strtotime($absenHari['jam_masuk']))  ?></strong><br>
@@ -211,7 +256,7 @@ include __DIR__.'/../../includes/header.php';
         <?php endif; ?>
 
         <div style="margin-top:1rem;padding:8px 12px;background:rgba(0,0,0,.2);border-radius:var(--r);font-size:11px;color:var(--text-m)">
-            Radius: <?= $radius ?>m · Toleransi: <?= $user['toleransi_terlambat'] ?? 15 ?> menit
+            Radius: <?= $radius ?>m &middot; Toleransi: <?= $user['toleransi_terlambat'] ?? 15 ?> menit
         </div>
     </div>
 
@@ -243,14 +288,14 @@ include __DIR__.'/../../includes/header.php';
                         $bs=['tepat'=>'badge-green','terlambat'=>'badge-amber','alpha'=>'badge-red','izin'=>'badge-blue'];?>
                     <tr>
                         <td class="text-sm"><?=formatTgl($r['tanggal'])?></td>
-                        <td class="mono text-sm"><?=$r['jam_masuk']?date('H:i',strtotime($r['jam_masuk'])):'—'?></td>
-                        <td class="mono text-sm"><?=$r['jam_keluar']?date('H:i',strtotime($r['jam_keluar'])):'—'?></td>
+                        <td class="mono text-sm"><?=$r['jam_masuk']?date('H:i',strtotime($r['jam_masuk'])):'&mdash;'?></td>
+                        <td class="mono text-sm"><?=$r['jam_keluar']?date('H:i',strtotime($r['jam_keluar'])):'&mdash;'?></td>
                         <td>
                             <?php if (!empty($r['foto_masuk'])): ?>
                             <img src="<?= BASE_URL ?>/assets/uploads/absensi/<?= htmlspecialchars($r['foto_masuk']) ?>"
                                 style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:1px solid var(--border-md)"
                                 title="Foto masuk">
-                            <?php else: ?><span class="text-muted text-xs">—</span><?php endif; ?>
+                            <?php else: ?><span class="text-muted text-xs">&mdash;</span><?php endif; ?>
                         </td>
                         <td><span class="badge <?=$bs[$r['status_masuk']]??'badge-gray'?>"><?=ucfirst($r['status_masuk'])?></span></td>
                     </tr>
@@ -270,19 +315,69 @@ var camStream   = null;
 var fotoData    = '';
 var pendingTipe = '';
 
-function bukakamera(tipe) {
-    pendingTipe = tipe;
-    fotoData    = '';
-    document.getElementById('cam-wrap').style.display = '';
+function stopCamera() {
+    if (camStream) {
+        camStream.getTracks().forEach(function(t){ t.stop(); });
+        camStream = null;
+    }
+}
+
+function resetCameraUI() {
+    stopCamera();
+    document.getElementById('cam-wrap').style.display = 'none';
+    document.getElementById('cam-video').style.display = '';
     document.getElementById('cam-preview-wrap').style.display = 'none';
     document.getElementById('btn-capture').style.display = '';
     document.getElementById('btn-retake').style.display = 'none';
     document.getElementById('hidden-foto').value = '';
+    document.getElementById('cam-status').textContent = '';
+}
+
+function bukakamera(tipe) {
+    if (tipe !== 'masuk' && tipe !== 'keluar') {
+        alert('Tipe absensi tidak valid.');
+        return;
+    }
+
+    if (pendingTipe === tipe && document.getElementById('cam-wrap').style.display !== 'none') {
+        capturePhoto();
+        return;
+    }
+
+    if (typeof gpsLat === 'undefined' || typeof gpsLng === 'undefined' || gpsLat === null || gpsLng === null) {
+        alert('GPS belum siap. Pastikan izin lokasi aktif, lalu tunggu sampai status lokasi valid.');
+        return;
+    }
+
+    if (typeof gpsValid !== 'undefined' && !gpsValid) {
+        alert('Anda berada di luar area kantor. Absensi tidak dapat dilakukan.');
+        return;
+    }
+
+    stopCamera();
+    pendingTipe = tipe;
+    fotoData    = '';
+    document.getElementById('cam-wrap').style.display = '';
+    document.getElementById('cam-video').style.display = '';
+    document.getElementById('cam-preview-wrap').style.display = 'none';
+    document.getElementById('btn-capture').style.display = '';
+    document.getElementById('btn-capture').disabled = false;
+    document.getElementById('btn-retake').style.display = 'none';
+    document.getElementById('hidden-foto').value = '';
+    document.getElementById('cam-status').textContent = 'Membuka kamera...';
+
+    // Cek HTTPS &mdash; getUserMedia hanya jalan di HTTPS atau localhost
+    var isSecure = window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if (!isSecure) {
+        alert('Kamera memerlukan HTTPS. Hubungi admin untuk mengaktifkan SSL pada hosting.');
+        resetCameraUI();
+        return;
+    }
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        // Kamera tidak tersedia — lanjutkan tanpa foto
-        document.getElementById('cam-wrap').style.display = 'none';
-        submitAbsen(tipe);
+        // Kamera wajib untuk absensi.
+        alert('Kamera tidak tersedia di perangkat/browser ini. Absensi tidak dapat dikirim tanpa foto.');
+        resetCameraUI();
         return;
     }
 
@@ -292,23 +387,50 @@ function bukakamera(tipe) {
         camStream = stream;
         var v = document.getElementById('cam-video');
         v.srcObject = stream;
-        v.play();
+        v.onloadedmetadata = function() {
+            document.getElementById('cam-status').textContent = 'Kamera siap. Tekan Ambil Foto.';
+        };
+        var playPromise = v.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(function() {
+                document.getElementById('cam-status').textContent = 'Kamera aktif. Tekan Ambil Foto.';
+            });
+        }
     }).catch(function() {
-        document.getElementById('cam-wrap').style.display = 'none';
-        submitAbsen(tipe);
+        resetCameraUI();
+        alert('Kamera gagal dibuka atau izin kamera ditolak. Absensi tidak dapat dikirim tanpa foto.');
     });
 }
 
 function capturePhoto() {
     var v = document.getElementById('cam-video');
     var c = document.getElementById('cam-canvas');
-    c.width  = v.videoWidth  || 320;
-    c.height = v.videoHeight || 240;
+    var btnCapture = document.getElementById('btn-capture');
+    var camStatus = document.getElementById('cam-status');
+
+    if (!v || !v.videoWidth || !v.videoHeight) {
+        alert('Kamera belum siap. Tunggu preview muncul, lalu ambil foto lagi.');
+        return;
+    }
+
+    if (btnCapture.disabled) return;
+    btnCapture.disabled = true;
+    camStatus.textContent = 'Mengambil foto...';
+
+    c.width  = v.videoWidth;
+    c.height = v.videoHeight;
     c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
     fotoData = c.toDataURL('image/jpeg', 0.75);
 
+    if (!fotoData || fotoData.indexOf('data:image/jpeg;base64,') !== 0) {
+        btnCapture.disabled = false;
+        camStatus.textContent = '';
+        alert('Foto kamera tidak valid. Ambil ulang foto.');
+        return;
+    }
+
     // Stop camera stream
-    if (camStream) { camStream.getTracks().forEach(function(t){ t.stop(); }); camStream = null; }
+    stopCamera();
 
     // Show preview
     document.getElementById('cam-video').style.display = 'none';
@@ -317,6 +439,7 @@ function capturePhoto() {
     document.getElementById('btn-capture').style.display = 'none';
     document.getElementById('btn-retake').style.display = '';
     document.getElementById('hidden-foto').value = fotoData;
+    camStatus.textContent = 'Mengirim absensi...';
 
     // Auto submit setelah foto diambil
     setTimeout(function(){ submitAbsen(pendingTipe); }, 600);
@@ -328,9 +451,42 @@ function retakePhoto() {
     document.getElementById('cam-preview-wrap').style.display = 'none';
     document.getElementById('cam-video').style.display = '';
     document.getElementById('btn-capture').style.display = '';
+    document.getElementById('btn-capture').disabled = false;
     document.getElementById('btn-retake').style.display = 'none';
+    document.getElementById('cam-status').textContent = '';
     bukakamera(pendingTipe);
 }
+
+document.getElementById('btn-capture')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    capturePhoto();
+});
+
+document.getElementById('btn-retake')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    retakePhoto();
+});
+
+document.addEventListener('click', function(e) {
+    var captureBtn = e.target.closest && e.target.closest('#btn-capture');
+    if (captureBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('cam-status').textContent = 'Tombol Ambil Foto diklik...';
+        capturePhoto();
+        return;
+    }
+
+    var retakeBtn = e.target.closest && e.target.closest('#btn-retake');
+    if (retakeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        retakePhoto();
+    }
+}, true);
+
+window.addEventListener('pagehide', stopCamera);
+window.addEventListener('beforeunload', stopCamera);
 </script>
 
 <?php include __DIR__.'/../../includes/footer.php'; ?>

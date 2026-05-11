@@ -51,7 +51,7 @@ $cutList = db()->query("SELECT c.*,u.nama,jc.nama jenis_nama FROM pengajuan_cuti
     JOIN jenis_cuti jc ON c.jenis_cuti_id=jc.id
     WHERE c.status='pending' ORDER BY c.created_at DESC LIMIT 5");
 
-// Kontrak akan habis ≤ 30 hari
+// Kontrak akan habis dalam 30 hari
 $kontrakHabis = db()->query("SELECT u.nama, u.nip, u.jenis_karyawan,
     u.tanggal_kontrak_selesai,
     DATEDIFF(u.tanggal_kontrak_selesai, CURDATE()) sisa_hari
@@ -63,21 +63,38 @@ $kontrakHabis = db()->query("SELECT u.nama, u.nip, u.jenis_karyawan,
 $reimbPend = (int)db()->query("SELECT COUNT(*) c FROM reimburse WHERE status='pending'")->fetch_assoc()['c'];
 
 $pageTitle  = 'Dashboard';
-$pageSub    = 'PT Pesta Hijau Abadi — '.date('d F Y');
+$pageSub    = 'PT Pesta Hijau Abadi - '.date('d F Y');
 $activePage = 'dashboard';
 include __DIR__.'/../../includes/header.php';
 ?>
 
+<div class="dash-hero">
+    <div class="dash-panel">
+        <div class="dash-eyebrow">Ringkasan operasional</div>
+        <div class="dash-heading">Pantau absensi, approval, dan payroll dari satu tempat.</div>
+        <div class="dash-sub"><?= (int)$sKar['aktif'] ?> karyawan aktif &middot; <?= $hadir ?> hadir hari ini &middot; <?= $lemPend + $cutPend + $reimbPend ?> approval menunggu</div>
+    </div>
+    <div class="dash-panel">
+        <div class="dash-eyebrow">Aksi cepat</div>
+        <div class="quick-action-grid mt-1">
+            <a class="quick-action" href="<?= BASE_URL ?>/pages/admin/absensi.php"><span class="quick-action-icon">&#9673;</span><span>Rekap Absensi</span></a>
+            <a class="quick-action" href="<?= BASE_URL ?>/pages/admin/karyawan.php"><span class="quick-action-icon">&#9783;</span><span>Data Karyawan</span></a>
+            <a class="quick-action" href="<?= BASE_URL ?>/pages/admin/reimburse.php"><span class="quick-action-icon">&#9674;</span><span>Reimburse</span></a>
+            <a class="quick-action" href="<?= BASE_URL ?>/pages/admin/penggajian.php"><span class="quick-action-icon">Rp</span><span>Penggajian</span></a>
+        </div>
+    </div>
+</div>
+
 <?php if ($kontrakHabis && $kontrakHabis->num_rows > 0): ?>
 <div class="alert alert-amber" style="display:flex;align-items:flex-start;gap:12px;margin-bottom:1rem">
-    <span style="font-size:22px;flex-shrink:0">⚠</span>
+    <span style="font-size:22px;flex-shrink:0">!</span>
     <div style="flex:1">
         <div style="font-weight:700;margin-bottom:6px">Kontrak / Magang Akan Berakhir dalam 30 Hari</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
         <?php while ($k = $kontrakHabis->fetch_assoc()): ?>
         <span style="background:rgba(245,158,11,.2);padding:3px 10px;border-radius:100px;font-size:12px">
             <strong><?= htmlspecialchars($k['nama']) ?></strong>
-            (<?= ucfirst($k['jenis_karyawan']) ?>) — <?= (int)$k['sisa_hari'] ?> hari lagi
+            (<?= ucfirst($k['jenis_karyawan']) ?>) - <?= (int)$k['sisa_hari'] ?> hari lagi
             <span class="text-muted"><?= formatTgl($k['tanggal_kontrak_selesai']) ?></span>
         </span>
         <?php endwhile; ?>
@@ -89,25 +106,25 @@ include __DIR__.'/../../includes/header.php';
 
 <div class="stat-grid">
     <div class="stat-card green">
-        <div class="stat-icon">👥</div>
+        <div class="stat-icon">&#9783;</div>
         <div class="stat-label">Total Karyawan</div>
         <div class="stat-value"><?= (int)$sKar['total'] ?></div>
-        <div class="stat-sub"><?= (int)$sKar['aktif'] ?> aktif · <?= (int)$sKar['cuti'] ?> cuti</div>
+        <div class="stat-sub"><?= (int)$sKar['aktif'] ?> aktif &middot; <?= (int)$sKar['cuti'] ?> cuti</div>
     </div>
     <div class="stat-card blue">
-        <div class="stat-icon">✅</div>
+        <div class="stat-icon">&#10003;</div>
         <div class="stat-label">Hadir Hari Ini</div>
         <div class="stat-value"><?= $hadir ?></div>
         <div class="stat-sub">dari <?= (int)$sKar['aktif'] ?> karyawan aktif</div>
     </div>
     <div class="stat-card amber">
-        <div class="stat-icon">⏳</div>
+        <div class="stat-icon">&#8987;</div>
         <div class="stat-label">Pending Approval</div>
         <div class="stat-value"><?= $lemPend + $cutPend + $reimbPend ?></div>
-        <div class="stat-sub"><?= $lemPend ?> lembur · <?= $cutPend ?> cuti · <?= $reimbPend ?> reimburse</div>
+        <div class="stat-sub"><?= $lemPend ?> lembur &middot; <?= $cutPend ?> cuti &middot; <?= $reimbPend ?> reimburse</div>
     </div>
     <div class="stat-card green">
-        <div class="stat-icon">💰</div>
+        <div class="stat-icon">Rp</div>
         <div class="stat-label">Total Gaji <?= bulanNama($bulan) ?></div>
         <div class="stat-value" style="font-size:16px"><?= formatRp($totGaji) ?></div>
         <div class="stat-sub"><?= $tahun ?></div>
@@ -140,8 +157,8 @@ include __DIR__.'/../../includes/header.php';
                             <div class="nc-sub"><?= htmlspecialchars($r['nip']) ?></div></div>
                         </div>
                     </td>
-                    <td class="mono text-sm"><?= $r['jam_masuk'] ? date('H:i', strtotime($r['jam_masuk'])) : '—' ?></td>
-                    <td class="mono text-sm"><?= $r['jam_keluar'] ? date('H:i', strtotime($r['jam_keluar'])) : '—' ?></td>
+                    <td class="mono text-sm"><?= $r['jam_masuk'] ? date('H:i', strtotime($r['jam_masuk'])) : '-' ?></td>
+                    <td class="mono text-sm"><?= $r['jam_keluar'] ? date('H:i', strtotime($r['jam_keluar'])) : '-' ?></td>
                     <td><span class="badge <?= $bc ?>"><?= $label ?></span></td>
                 </tr>
                 <?php endwhile; endif; ?>

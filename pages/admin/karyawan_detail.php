@@ -23,7 +23,7 @@ $absen10= db()->query("SELECT * FROM absensi WHERE user_id=$id ORDER BY tanggal 
 $pageTitle  = htmlspecialchars($usr['nama']);
 $pageSub    = 'Detail Karyawan';
 $activePage = 'karyawan';
-$topbarActions = '<a href="'.BASE_URL.'/pages/admin/karyawan.php" class="btn btn-sm">← Kembali</a>';
+$topbarActions = '<a href="'.BASE_URL.'/pages/admin/karyawan.php" class="btn btn-sm icon-label"><span class="ui-icon i-arrow-left"></span> Kembali</a>';
 include __DIR__.'/../../includes/header.php';
 ?>
 
@@ -40,7 +40,7 @@ include __DIR__.'/../../includes/header.php';
                     <span class="badge badge-purple"><?=strtoupper($usr['role'])?></span>
                 </div>
                 <table style="width:100%;text-align:left;font-size:13px">
-                    <?php $info=[['Email',$usr['email']??'—'],['Telp',$usr['telepon']??'—'],['Dept',$usr['dept_nama']??'—'],['Jabatan',$usr['jabatan_nama']??'—'],['Shift',$usr['shift_nama']??'—'],['Bergabung',formatTgl($usr['tanggal_bergabung']??'')],['Gaji Pokok',formatRp($usr['gaji_pokok']??0)],['Sisa Cuti',$usr['sisa_cuti'].' hari']];
+                    <?php $info=[['Email',$usr['email']??'&mdash;'],['Telp',$usr['telepon']??'&mdash;'],['Dept',$usr['dept_nama']??'&mdash;'],['Jabatan',$usr['jabatan_nama']??'&mdash;'],['Shift',$usr['shift_nama']??'&mdash;'],['Bergabung',formatTgl($usr['tanggal_bergabung']??'')],['Gaji Pokok',formatRp($usr['gaji_pokok']??0)],['Sisa Cuti',$usr['sisa_cuti'].' hari']];
                     foreach ($info as [$k,$v]): ?>
                     <tr><td style="color:var(--text-m);padding:5px 0;font-size:12px"><?=$k?></td><td style="padding:5px 0"><?=htmlspecialchars($v)?></td></tr>
                     <?php endforeach; ?>
@@ -79,9 +79,9 @@ include __DIR__.'/../../includes/header.php';
                     $bs=['tepat'=>'badge-green','terlambat'=>'badge-amber','alpha'=>'badge-red','izin'=>'badge-blue'];?>
                 <tr>
                     <td class="text-sm"><?=formatTgl($a['tanggal'])?></td>
-                    <td class="mono text-sm"><?=$a['jam_masuk']?date('H:i',strtotime($a['jam_masuk'])):'—'?></td>
-                    <td class="mono text-sm"><?=$a['jam_keluar']?date('H:i',strtotime($a['jam_keluar'])):'—'?></td>
-                    <td class="text-sm text-muted"><?=$a['jarak_masuk']?$a['jarak_masuk'].'m':'—'?></td>
+                    <td class="mono text-sm"><?=$a['jam_masuk']?date('H:i',strtotime($a['jam_masuk'])):'&mdash;'?></td>
+                    <td class="mono text-sm"><?=$a['jam_keluar']?date('H:i',strtotime($a['jam_keluar'])):'&mdash;'?></td>
+                    <td class="text-sm text-muted"><?=$a['jarak_masuk']?$a['jarak_masuk'].'m':'&mdash;'?></td>
                     <td><span class="badge <?=$bs[$a['status_masuk']]??'badge-gray'?>"><?=ucfirst($a['status_masuk'])?></span></td>
                 </tr>
                 <?php endwhile; endif; ?>
