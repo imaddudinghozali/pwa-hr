@@ -3,28 +3,25 @@
 // config/database.php  &mdash;  SIMK PHA
 // ============================================================
 
-define('DB_HOST',      'localhost');
-define('DB_USER',      'root');
-define('DB_PASS',      '');
-define('DB_NAME',      'simk_pha');
-define('APP_NAME',     'SIMK PHA');
+define('DB_HOST', getenv('MYSQLHOST') ?: 'localhost');
+define('DB_PORT', (int)(getenv('MYSQLPORT') ?: 3306));
+define('DB_USER', getenv('MYSQLUSER') ?: 'root');
+define('DB_PASS', getenv('MYSQLPASSWORD') ?: '');
+define('DB_NAME', getenv('MYSQL_DATABASE') ?: (getenv('MYSQLDATABASE') ?: 'railway'));
+define('APP_NAME', 'SIMK PHA');
 
-// ---
-// Untuk override manual: define('BASE_URL', 'https://domain.com'); SEBELUM file ini di-include
-if (!defined('BASE_URL')) {
-    $proto = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-          || (($_SERVER['SERVER_PORT'] ?? 80) == 443)
-          || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
-          ? 'https' : 'http';
+$baseUrl = getenv('APP_URL');
+if (!$baseUrl) {
+    $proto = (
+        (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+        (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+    ) ? 'https' : 'http';
+
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $docRoot  = isset($_SERVER['DOCUMENT_ROOT']) ? str_replace('\\', '/', realpath($_SERVER['DOCUMENT_ROOT'])) : '';
-    $projRoot = str_replace('\\', '/', dirname(__DIR__));
-    $basePath = '';
-    if ($docRoot && $projRoot && strpos($projRoot, $docRoot) === 0) {
-        $basePath = substr($projRoot, strlen($docRoot));
-    }
-    define('BASE_URL', $proto.'://'.$host.$basePath);
+    $baseUrl = $proto . '://' . $host;
 }
+
+define('BASE_URL', rtrim($baseUrl, '/'));
 define('COMPANY_NAME', 'PT Pesta Hijau Abadi');
 
 // Koordinat kantor utama (fallback jika departemen belum diatur)
@@ -35,20 +32,33 @@ define('ABSEN_RADIUS', 200);   // meter
 // ---
 function db(): mysqli {
     static $conn = null;
+
     if ($conn === null) {
         mysqli_report(MYSQLI_REPORT_OFF);
-        $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+        $conn = new mysqli(
+            DB_HOST,
+            DB_USER,
+            DB_PASS,
+            DB_NAME,
+            DB_PORT
+        );
+
         if ($conn->connect_error) {
             die('<div style="font-family:sans-serif;padding:2rem;color:#dc2626">'
                .'<h2>Koneksi Database Gagal</h2>'
                .'<p>'.htmlspecialchars($conn->connect_error).'</p>'
-               .'<p>Periksa setting di <code>config/database.php</code></p></div>');
+               .'<p>Host: '.htmlspecialchars(DB_HOST).'</p>'
+               .'<p>Port: '.htmlspecialchars((string)DB_PORT).'</p>'
+               .'<p>Database: '.htmlspecialchars(DB_NAME).'</p>'
+               .'</div>');
         }
+
         $conn->set_charset('utf8mb4');
     }
+
     return $conn;
 }
-
 function dbPrepare(string $sql): mysqli_stmt {
     $stmt = db()->prepare($sql);
     if (!$stmt) {
