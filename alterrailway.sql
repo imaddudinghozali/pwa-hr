@@ -31,6 +31,10 @@ SET @exists := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHE
 SET @sql := IF(@exists=0, 'ALTER TABLE users ADD COLUMN tunjangan_jabatan_override DECIMAL(15,2) DEFAULT NULL', 'SELECT 1');
 PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
+SET @exists := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='users' AND COLUMN_NAME='lokasi_kerja');
+SET @sql := IF(@exists=0, 'ALTER TABLE users ADD COLUMN lokasi_kerja VARCHAR(100) NULL AFTER nama_bank', 'SELECT 1');
+PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
+
 -- ============================================================
 -- 2. Cuti
 -- ============================================================
