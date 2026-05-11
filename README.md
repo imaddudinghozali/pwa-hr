@@ -1,200 +1,78 @@
-# PWA-HR V1
+# PWA-HR
 
-PWA-HR adalah aplikasi manajemen HR berbasis PHP native dan MySQL untuk kebutuhan operasional karyawan. Aplikasi ini dibuat sebagai Progressive Web App (PWA), sehingga dapat dibuka lewat browser desktop/mobile dan dapat di-install ke home screen perangkat.
+PWA-HR is a lightweight HRIS web application built with **native PHP** and **MySQL**. It covers essential HR workflows such as camera-based attendance, payroll management, reimbursements, internal chat, employee data management, and employee payslips.
 
-Project ini menggunakan nama aplikasi **SIMK PHA** untuk PT Pesta Hijau Abadi.
+The application is designed as a **Progressive Web App (PWA)**, so it can be accessed from desktop and mobile browsers and installed to supported devices.
 
-## Fitur Utama
+## Preview
 
-- Dashboard admin dan karyawan.
-- Login berbasis role: admin, HRD, dan karyawan.
-- Manajemen data karyawan, departemen, jabatan, dan shift kerja.
-- Absensi kamera dengan validasi GPS radius kantor/departemen.
-- Upload foto absensi dari kamera, disimpan sebagai JPEG.
-- Rekap absensi dan riwayat absensi bulanan.
-- Pengajuan dan approval lembur.
-- Pengajuan dan approval cuti.
-- Pengajuan dan approval reimburse.
-- Chat internal antara HR/Admin dan karyawan.
-- Penggajian manual oleh HRD/Admin.
-- Slip gaji karyawan.
-- Notifikasi karyawan.
-- PWA manifest, service worker, offline page, dan install prompt.
-- Tampilan responsive untuk desktop dan mobile.
+> Screenshots can be placed in the `/screenshots` folder.
 
-## Role User
+| Login | Admin Dashboard | Employee Attendance |
+| --- | --- | --- |
+| `screenshots/login-page.png` | `screenshots/dashboard-karyawan.png` | `screenshots/absensi-page.png` |
+
+| Payroll | Reimburse | Internal Chat |
+| --- | --- | --- |
+| `screenshots/payroll.png` | `screenshots/reimburse.png` | `screenshots/chat-page.png` |
+
+## Main Features
+
+- Role-based login for Admin, HRD, and Employee users.
+- Admin and employee dashboards.
+- Employee management with department, position, shift, and contract data.
+- Camera attendance with GPS validation.
+- Attendance history and monthly recap.
+- Manual payroll management controlled by Admin/HRD.
+- Employee payslip view.
+- Reimbursement submission and approval.
+- Leave and overtime workflows.
+- Internal HR chat.
+- Notification page for employees.
+- Responsive UI for desktop and mobile.
+- PWA support with manifest, service worker, install prompt, and offline page.
+
+## User Roles
 
 ### Admin
 
-- Mengakses dashboard admin.
-- Mengelola data karyawan.
-- Mengelola master departemen dan shift.
-- Melihat rekap absensi.
-- Menyetujui/menolak cuti, lembur, dan reimburse.
-- Mengelola slip gaji.
-- Mengakses chat.
+- Manage employees.
+- Manage departments and shifts.
+- View attendance recap.
+- Approve or reject leave, overtime, and reimbursements.
+- Manage payroll and payslips.
+- Access internal chat.
 
 ### HRD
 
-- Secara umum diperlakukan seperti admin pada halaman operasional HR.
-- Dapat mengelola penggajian, approval, data karyawan, dan komunikasi HR.
+- Access HR operational pages.
+- Manage employee-related workflows.
+- Manage payroll and reimbursement approvals.
+- Communicate with employees through chat.
 
 ### Karyawan
 
-- Mengakses dashboard karyawan.
-- Melakukan absensi kamera.
-- Mengajukan cuti, lembur, dan reimburse.
-- Melihat slip gaji sendiri.
-- Mengedit profil pribadi.
-- Mengakses notifikasi dan chat HR.
+- Access employee dashboard.
+- Submit camera attendance.
+- Submit leave, overtime, and reimbursement requests.
+- View personal payslips.
+- Update profile.
+- Use internal chat and notifications.
 
-## Konsep Penggajian V1
+## Tech Stack
 
-Penggajian pada V1 bersifat **manual dikontrol HRD/Admin**.
+| Area | Technology |
+| --- | --- |
+| Backend | Native PHP |
+| Database | MySQL / MariaDB |
+| Frontend | HTML, CSS, Vanilla JavaScript |
+| Database Driver | MySQLi |
+| PWA | Web App Manifest, Service Worker, Cache API |
+| Attendance | HTML5 Camera API, Geolocation API |
+| Styling | Custom CSS |
+| Local Server | XAMPP / Laragon |
 
-HRD/Admin menginput:
-
-- Gaji pokok
-- Tunjangan jabatan
-- Tunjangan makan
-- Tunjangan transport
-- Bonus
-- Upah lembur manual
-- Potongan absen
-- Potongan BPJS
-- Potongan PPh21
-- Potongan lain-lain
-- Catatan
-
-Sistem hanya menjumlahkan total gaji dari input tersebut. Data absensi, lembur, dan kontrak tidak otomatis menentukan nominal gaji, kecuali sebagai referensi tampilan bila diperlukan.
-
-## Cara Install di XAMPP
-
-### 1. Persyaratan
-
-- XAMPP dengan Apache dan MySQL/MariaDB aktif.
-- PHP 8.x direkomendasikan.
-- Extension PHP yang dibutuhkan:
-  - `mysqli`
-  - `gd`
-  - `fileinfo` atau dukungan MIME gambar setara
-- Browser modern seperti Chrome, Edge, atau Firefox.
-
-### 2. Letakkan Project
-
-Letakkan folder project di:
-
-```text
-C:\xampp\htdocs\pwa-hr
-```
-
-URL lokal:
-
-```text
-http://localhost/pwa-hr/
-```
-
-### 3. Setup Database
-
-Database default:
-
-```text
-simk_pha
-```
-
-Import melalui phpMyAdmin:
-
-1. Buka `http://localhost/phpmyadmin`.
-2. Pilih menu **Import**.
-3. Pilih file [database.sql](database.sql).
-4. Jalankan import.
-
-Atau lewat terminal:
-
-```bash
-mysql -u root -p < database.sql
-```
-
-Jika project sudah pernah di-import dan ada perubahan tabel tambahan, jalankan juga:
-
-```text
-alter_tables.sql
-```
-
-### 4. Konfigurasi Database
-
-File konfigurasi ada di [config/database.php](config/database.php).
-
-Default konfigurasi lokal:
-
-```php
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'simk_pha');
-```
-
-Sesuaikan jika username, password, atau nama database berbeda.
-
-### 5. Inisialisasi Password Akun Demo
-
-Setelah import database, buka:
-
-```text
-http://localhost/pwa-hr/setup.php
-```
-
-Halaman ini mengisi password untuk akun demo yang masih berstatus `SETUP_REQUIRED`.
-
-Default password pada form setup:
-
-```text
-Admin@123
-```
-
-## Akun Demo
-
-Setelah menjalankan `setup.php`, akun demo yang tersedia:
-
-| Role | NIP | Email | Password Default |
-| --- | --- | --- | --- |
-| Admin | `ADM001` | `admin@pestahijau.co.id` | `Admin@123` |
-| HRD | `HRD001` | `sari.dewi@pestahijau.co.id` | `Admin@123` |
-| Karyawan | `EMP001` | `andi.k@pestahijau.co.id` | `Admin@123` |
-| Karyawan | `EMP002` | `budi.s@pestahijau.co.id` | `Admin@123` |
-| Karyawan | `EMP003` | `rina.m@pestahijau.co.id` | `Admin@123` |
-
-Login dapat memakai NIP atau email.
-
-## Cara Menjalankan
-
-1. Nyalakan Apache dan MySQL dari XAMPP Control Panel.
-2. Pastikan database sudah di-import.
-3. Pastikan `setup.php` sudah dijalankan untuk mengatur password demo.
-4. Buka:
-
-```text
-http://localhost/pwa-hr/
-```
-
-5. Login menggunakan akun demo.
-
-## Catatan Absensi Kamera
-
-- Absensi karyawan membutuhkan GPS dan kamera.
-- Kamera harus berhasil mengambil foto sebelum form absensi dikirim.
-- Foto absensi wajib berupa JPEG base64 valid.
-- Server menolak foto kosong, base64 rusak, non-JPEG, ukuran decoded lebih dari 2 MB, dan folder upload yang tidak writable.
-- Folder upload absensi:
-
-```text
-assets/uploads/absensi
-```
-
-- Di localhost, kamera dan GPS umumnya dapat berjalan lewat `http://localhost`.
-- Di hosting/production, gunakan HTTPS agar `getUserMedia()` dan Geolocation API berjalan stabil.
-
-## Struktur Folder
+## Important Folder Structure
 
 ```text
 pwa-hr/
@@ -215,64 +93,184 @@ pwa-hr/
 |   `-- footer.php
 |-- pages/
 |   |-- admin/
-|   |   |-- absensi.php
-|   |   |-- chat.php
-|   |   |-- cuti.php
 |   |   |-- dashboard.php
-|   |   |-- departemen.php
-|   |   |-- export_karyawan.php
 |   |   |-- karyawan.php
-|   |   |-- karyawan_detail.php
-|   |   |-- lembur.php
+|   |   |-- absensi.php
 |   |   |-- penggajian.php
 |   |   |-- reimburse.php
-|   |   |-- shift.php
-|   |   `-- slip_detail.php
+|   |   |-- chat.php
+|   |   |-- departemen.php
+|   |   `-- shift.php
 |   `-- karyawan/
-|       |-- absensi.php
-|       |-- chat.php
-|       |-- cuti.php
 |       |-- dashboard.php
-|       |-- lembur.php
-|       |-- notifikasi.php
-|       |-- profil.php
+|       |-- absensi.php
+|       |-- slip_gaji.php
 |       |-- reimburse.php
-|       `-- slip_gaji.php
-|-- alter_tables.sql
+|       |-- chat.php
+|       `-- profil.php
+|-- screenshots/
 |-- database.sql
+|-- alter_tables.sql
 |-- index.php
 |-- login.php
 |-- logout.php
 |-- manifest.json
 |-- offline.html
-|-- setup.php
 `-- sw.js
 ```
 
-## File Penting
+## Installation
 
-- [database.sql](database.sql): schema awal dan data demo.
-- [alter_tables.sql](alter_tables.sql): perubahan tabel tambahan.
-- [config/database.php](config/database.php): koneksi database, helper auth, helper format, dan konfigurasi GPS fallback.
-- [assets/css/app.css](assets/css/app.css): styling global aplikasi.
-- [assets/js/app.js](assets/js/app.js): PWA, helper UI, GPS, dan guard submit absensi.
-- [pages/karyawan/absensi.php](pages/karyawan/absensi.php): absensi kamera karyawan.
-- [pages/admin/penggajian.php](pages/admin/penggajian.php): manajemen slip gaji manual.
-- [api/chat.php](api/chat.php): API chat internal.
+### XAMPP
 
-## Catatan Keamanan
+1. Clone this repository into the XAMPP `htdocs` directory.
 
-- Ganti password default setelah setup.
-- Hapus atau batasi akses [setup.php](setup.php) setelah aplikasi siap digunakan.
-- Gunakan HTTPS di production, terutama untuk kamera, GPS, session cookie, dan PWA.
-- Pastikan folder upload hanya menerima tipe file yang divalidasi aplikasi.
-- Pastikan folder `assets/uploads` tidak mengizinkan eksekusi PHP.
-- Batasi permission file dan folder sesuai kebutuhan server.
-- Backup database secara berkala.
-- Jangan commit data rahasia, credential production, atau file upload sensitif.
-- Validasi role sudah diterapkan pada halaman admin/karyawan, tetapi tetap lakukan audit sebelum production.
-- Tambahkan CSRF protection untuk deployment production jika fitur write-action dibuka ke jaringan publik.
+```bash
+cd C:\xampp\htdocs
+git clone https://github.com/imaddudinghozali/pwa-hr.git
+```
 
-## Status V1
+2. Start **Apache** and **MySQL** from XAMPP Control Panel.
 
-PWA-HR V1 siap digunakan untuk demo dan pengujian internal di XAMPP. Untuk production, lakukan hardening tambahan pada HTTPS, session cookie, CSRF, backup, permission upload, dan monitoring error server.
+3. Open phpMyAdmin.
+
+```text
+http://localhost/phpmyadmin
+```
+
+4. Import [database.sql](database.sql).
+
+5. If needed, apply [alter_tables.sql](alter_tables.sql) after the main database import.
+
+6. Configure database credentials in [config/database.php](config/database.php).
+
+```php
+define('DB_HOST', 'localhost');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+define('DB_NAME', 'simk_pha');
+```
+
+7. Open the application.
+
+```text
+http://localhost/pwa-hr/
+```
+
+### Laragon
+
+1. Clone this repository into the Laragon `www` directory.
+
+```bash
+cd C:\laragon\www
+git clone https://github.com/imaddudinghozali/pwa-hr.git
+```
+
+2. Start **Apache/Nginx** and **MySQL** from Laragon.
+
+3. Import [database.sql](database.sql) through phpMyAdmin, Adminer, or another MySQL client.
+
+4. Configure [config/database.php](config/database.php).
+
+5. Open the project from the generated local URL or:
+
+```text
+http://localhost/pwa-hr/
+```
+
+## Demo Login
+
+The database seed contains demo user identities for testing:
+
+| Role | NIP | Email |
+| --- | --- | --- |
+| Admin | `ADM001` | `admin@pestahijau.co.id` |
+| HRD | `HRD001` | `sari.dewi@pestahijau.co.id` |
+| Karyawan | `EMP001` | `andi.k@pestahijau.co.id` |
+| Karyawan | `EMP002` | `budi.s@pestahijau.co.id` |
+| Karyawan | `EMP003` | `rina.m@pestahijau.co.id` |
+
+For deployment-ready usage, passwords should be configured securely by the administrator before publishing the application.
+
+## Feature Overview
+
+### Camera Attendance + GPS
+
+Employees can submit attendance using the device camera. The attendance flow validates GPS location against the assigned office or department radius, requires a valid JPEG photo, and stores attendance records with timestamp, distance, and device information.
+
+### Payroll
+
+Payroll is controlled manually by Admin/HRD. The system calculates the final total from HR-controlled components such as base salary, allowances, bonus, overtime amount, deductions, and notes.
+
+### Reimburse
+
+Employees can submit reimbursement requests with category, amount, description, and proof attachment. Admin/HRD can review, approve, reject, and add approval notes.
+
+### Internal Chat
+
+The application includes a simple internal chat module for communication between HR/Admin and employees.
+
+### Payslip
+
+Employees can view their own payslips, while Admin/HRD can manage payroll records and view payslip details.
+
+## Responsive and PWA Support
+
+PWA-HR includes:
+
+- Responsive layout for desktop, tablet, and mobile.
+- Web App Manifest.
+- Service Worker.
+- Offline page.
+- Install prompt support.
+- Mobile-friendly navigation and tables.
+
+For production, HTTPS is recommended so camera, geolocation, and PWA behavior work reliably.
+
+## Screenshots
+
+Add project screenshots to:
+
+```text
+screenshots/
+```
+
+Recommended files:
+
+- `screenshots/login-page.png`
+- `screenshots/dashboard-karyawan.png`
+- `screenshots/employee-dashboard.png`
+- `screenshots/absensi-page.png`
+- `screenshots/payroll.png`
+- `screenshots/reimburse.png`
+- `screenshots/chat-page.png`
+
+## Roadmap V2
+
+- Push notification.
+- Android/iOS APK build.
+- Excel import for employee and payroll data.
+- More advanced multi-branch support.
+- More detailed audit log.
+- Improved reporting and analytics.
+- Additional payroll components and approval workflow.
+
+## Security Notes
+
+- Use HTTPS in production.
+- Change all default/demo credentials before public deployment.
+- Restrict upload directory execution.
+- Keep database credentials outside public repositories for production.
+- Add CSRF protection before exposing write actions to public networks.
+- Backup the database regularly.
+- Review server permissions for upload and cache folders.
+
+## License
+
+This project is provided for portfolio and educational purposes. Add a license file before using it for commercial or production distribution.
+
+## Author
+
+**Imaddudin Ghozali**
+
+- GitHub: [imaddudinghozali](https://github.com/imaddudinghozali)

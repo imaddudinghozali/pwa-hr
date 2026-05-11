@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$user) {
             $error = 'NIP/Email tidak ditemukan atau akun non-aktif.';
         } elseif ($user['password'] === 'SETUP_REQUIRED') {
-            $error = 'Password belum diatur. Buka <a href="'.BASE_URL.'/setup.php" style="color:#4ade80;text-decoration:underline">setup.php</a> terlebih dahulu.';
+            $error = 'Password akun belum aktif. Hubungi HR/Admin untuk aktivasi akun.';
         } elseif (!password_verify($pass, $user['password'])) {
             $error = 'Password salah.';
         } else {
@@ -49,11 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#16a34a">
+<meta name="theme-color" content="#0f172a">
 <link rel="manifest" href="<?= BASE_URL ?>/manifest.json">
 <link rel="apple-touch-icon" href="<?= BASE_URL ?>/assets/icons/icon-192.png">
 <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/app.css">
-<title>Login &mdash; SIMK PT Pesta Hijau Abadi</title>
+<title>Login &mdash; SIMK PHA</title>
 </head>
 <body>
 <div class="login-page">
@@ -73,15 +73,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group mb-2">
                 <label class="form-label">NIP atau Email</label>
                 <input type="text" name="nip" class="form-control"
-                       placeholder="Contoh: ADM001 atau admin@..."
+                       placeholder="Masukkan NIP atau email"
                        value="<?= htmlspecialchars($_POST['nip'] ?? '') ?>"
+                       autocomplete="username"
                        required autofocus>
             </div>
             <div class="form-group mb-3">
                 <label class="form-label">Password</label>
                 <div style="position:relative">
                     <input type="password" name="password" id="inp-pass" class="form-control"
-                           placeholder="Masukkan password" required style="padding-right:42px">
+                           placeholder="Masukkan password" autocomplete="current-password" required style="padding-right:42px">
                     <button type="button" onclick="togglePass(this)"
                         style="position:absolute;right:10px;top:50%;transform:translateY(-50%);
                                background:none;border:none;cursor:pointer;color:var(--text-m);font-size:16px"
@@ -91,15 +92,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button type="submit" class="btn btn-primary btn-xl icon-label">Masuk <span class="ui-icon i-arrow-right"></span></button>
         </form>
 
-        <div style="margin-top:1.5rem;padding:1rem;background:var(--surface-2);
-                    border-radius:var(--r);font-size:12px;color:var(--text-m)">
-            <strong style="color:var(--text-2)">Akun demo:</strong><br>
-            Admin: <code>ADM001</code> &nbsp;|&nbsp;
-            HRD: <code>HRD001</code> &nbsp;|&nbsp;
-            Karyawan: <code>EMP001</code><br>
-            Password: <code>Admin@123</code><br><br>
-            <span class="icon-label" style="color:#fcd34d"><span class="ui-icon i-alert"></span> Pertama kali? Jalankan dulu</span>
-            <a href="<?= BASE_URL ?>/setup.php" style="color:#4ade80;font-weight:600"> setup.php</a>
+        <div style="margin-top:1.5rem;padding:1rem;background:rgba(15,23,42,.42);
+                    border:1px solid var(--border);border-radius:var(--r);font-size:12px;color:var(--text-m)">
+            <div class="icon-label" style="color:var(--text-2);font-weight:700;margin-bottom:4px">
+                <span class="ui-icon i-info"></span> Akses internal perusahaan
+            </div>
+            Gunakan akun yang diberikan oleh HR/Admin. Demi keamanan, jangan bagikan password kepada siapa pun.
         </div>
     </div>
 </div>
