@@ -169,7 +169,7 @@ $nextNip = sprintf('EMP%03d', $maxNip + 1);
 
 $pageTitle      = 'Manajemen Karyawan';
 $activePage     = 'karyawan';
-$topbarActions  = '<a href="'.BASE_URL.'/pages/admin/import_karyawan.php" class="btn btn-sm icon-label"><span class="ui-icon i-download"></span> Import</a> <a href="'.BASE_URL.'/pages/admin/export_karyawan.php" class="btn btn-sm icon-label"><span class="ui-icon i-download"></span> Export</a> <button class="btn btn-primary icon-label" onclick="openModal(\'mTambah\')"><span class="ui-icon i-users"></span> Tambah</button>';
+$topbarActions  = '<a href="'.BASE_URL.'/pages/admin/export_karyawan.php" class="btn btn-sm icon-label"><span class="ui-icon i-download"></span> Export</a> <button class="btn btn-primary icon-label" onclick="openModal(\'mTambah\')"><span class="ui-icon i-users"></span> Tambah</button>';
 include __DIR__.'/../../includes/header.php';
 ?>
 

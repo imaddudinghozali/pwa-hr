@@ -14,8 +14,7 @@ ALTER TABLE users
     ADD COLUMN IF NOT EXISTS jenis_karyawan ENUM('tetap','kontrak','magang') DEFAULT 'tetap' AFTER status,
     ADD COLUMN IF NOT EXISTS tanggal_kontrak_selesai DATE NULL AFTER tanggal_bergabung,
     ADD COLUMN IF NOT EXISTS gaji_pokok_override DECIMAL(15,2) DEFAULT NULL COMMENT 'Override gaji pokok dari jabatan',
-    ADD COLUMN IF NOT EXISTS tunjangan_jabatan_override DECIMAL(15,2) DEFAULT NULL COMMENT 'Override tunjangan jabatan',
-    ADD COLUMN IF NOT EXISTS lokasi_kerja VARCHAR(100) NULL AFTER nama_bank;
+    ADD COLUMN IF NOT EXISTS tunjangan_jabatan_override DECIMAL(15,2) DEFAULT NULL COMMENT 'Override tunjangan jabatan';
 
 -- ── 2. Tabel Reimburse ────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS reimburse (
