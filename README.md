@@ -6,15 +6,13 @@ The application is designed as a **Progressive Web App (PWA)**, so it can be acc
 
 ## Preview
 
-> Screenshots can be placed in the `/screenshots` folder.
-
 | Login | Admin Dashboard | Employee Attendance |
 | --- | --- | --- |
-| `screenshots/login-page.png` | `screenshots/dashboard-karyawan.png` | `screenshots/absensi-page.png` |
+| ![Login page](screenshots/login-page.png) | ![Admin dashboard](screenshots/dashboard-karyawan.png) | ![Employee attendance](screenshots/absensi-page.png) |
 
 | Payroll | Reimburse | Internal Chat |
 | --- | --- | --- |
-| `screenshots/payroll.png` | `screenshots/reimburse.png` | `screenshots/chat-page.png` |
+| ![Payroll page](screenshots/payroll.png) | ![Reimburse page](screenshots/reimburse.png) | ![Internal chat page](screenshots/chat-page.png) |
 
 ## Main Features
 
@@ -239,7 +237,6 @@ Recommended files:
 
 - `screenshots/login-page.png`
 - `screenshots/dashboard-karyawan.png`
-- `screenshots/employee-dashboard.png`
 - `screenshots/absensi-page.png`
 - `screenshots/payroll.png`
 - `screenshots/reimburse.png`
